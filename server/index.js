@@ -4,13 +4,16 @@ const http = require("http");
 
 const { Server } = require("socket.io");
 
-const { PrismaClient } = require("@prisma/client");
+const {
+  PrismaClient,
+} = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
 const app = express();
 
-const server = http.createServer(app);
+const server =
+  http.createServer(app);
 
 const io = new Server(server, {
   cors: {
@@ -27,7 +30,9 @@ app.use(express.json());
 ========================= */
 
 io.on("connection", (socket) => {
-  console.log("Cliente conectado");
+  console.log(
+    "Cliente conectado"
+  );
 });
 
 /* =========================
@@ -35,96 +40,110 @@ io.on("connection", (socket) => {
 ========================= */
 
 app.get("/", (req, res) => {
-  res.send("Backend funcionando 🚀");
+  res.send(
+    "Backend funcionando 🚀"
+  );
 });
 
 /* =========================
    OBTENER PEDIDOS
 ========================= */
 
-app.get("/pedidos", async (req, res) => {
-  try {
-    const pedidos =
-      await prisma.pedido.findMany({
-        include: {
-          items: true,
-        },
+app.get(
+  "/pedidos",
+  async (req, res) => {
+    try {
+      const pedidos =
+        await prisma.pedido.findMany(
+          {
+            include: {
+              items: true,
+            },
 
-        orderBy: {
-          fecha: "desc",
-        },
+            orderBy: {
+              fecha: "desc",
+            },
+          }
+        );
+
+      res.json(pedidos);
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        error: error.message,
       });
-
-    res.json(pedidos);
-  } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      error: error.message,
-    });
+    }
   }
-});
+);
 
 /* =========================
    CREAR PEDIDO
 ========================= */
 
-app.post("/pedidos", async (req, res) => {
-  try {
-    const {
-      mesa,
-      metodo,
-      total,
-      items,
-    } = req.body;
+app.post(
+  "/pedidos",
+  async (req, res) => {
+    try {
+      const {
+        mesa,
+        metodo,
+        total,
+        items,
+      } = req.body;
 
-    const numero = Math.floor(
-      Math.random() * 9000
-    );
+      const numero =
+        Math.floor(
+          Math.random() * 9000
+        );
 
-    const pedido =
-      await prisma.pedido.create({
-        data: {
-          numero,
-          mesa,
-          metodo,
-          total,
-          estado: "Pendiente",
+      const pedido =
+        await prisma.pedido.create({
+          data: {
+            numero,
+            mesa,
+            metodo,
+            total,
+            estado: "Pendiente",
 
-          items: {
-            create: items.map(
-              (item) => ({
-                nombre:
-                  item.nombre,
+            fecha: new Date(),
 
-                precio:
-                  item.precio,
+            items: {
+              create: items.map(
+                (item) => ({
+                  nombre:
+                    item.nombre,
 
-                qty: item.qty,
-              })
-            ),
+                  precio:
+                    item.precio,
+
+                  qty:
+                    item.qty,
+                })
+              ),
+            },
           },
-        },
 
-        include: {
-          items: true,
-        },
+          include: {
+            items: true,
+          },
+        });
+
+      io.emit(
+        "nuevo-pedido",
+        pedido
+      );
+
+      res.json(pedido);
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        error: error.message,
       });
-
-    io.emit(
-      "nuevo-pedido",
-      pedido
-    );
-
-    res.json(pedido);
-  } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      error: error.message,
-    });
+    }
   }
-});
+);
 
 /* =========================
    ACTUALIZAR ESTADO
@@ -171,7 +190,7 @@ app.put(
 );
 
 /* =========================
-START
+   START
 ========================= */
 
 const PORT =
