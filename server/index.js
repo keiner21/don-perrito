@@ -1,15 +1,12 @@
 const express = require("express");
 const cors = require("cors");
-
 const http = require("http");
-
-const jwt = require("jsonwebtoken");
-
-const bcrypt = require("bcryptjs");
 
 const { Server } = require("socket.io");
 
-const prisma = require("./prismaClient");
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
 
 const app = express();
 
@@ -17,89 +14,28 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "*",
   },
 });
-
-const JWT_SECRET = "donperrito_secret";
 
 app.use(cors());
 
 app.use(express.json());
 
+/* =========================
+   SOCKET
+========================= */
+
 io.on("connection", (socket) => {
-  console.log(
-    "Cliente conectado:",
-    socket.id
-  );
-
-  socket.on("disconnect", () => {
-    console.log("Cliente desconectado");
-  });
-});
-
-app.get("/", (req, res) => {
-  res.json({
-    message:
-      "API Don Perrito funcionando 🚀",
-  });
+  console.log("Cliente conectado");
 });
 
 /* =========================
-   LOGIN ADMIN
+   TEST
 ========================= */
 
-app.post("/login", async (req, res) => {
-  try {
-    const { email, password } =
-      req.body;
-
-    const admin =
-      await prisma.admin.findUnique({
-        where: {
-          email,
-        },
-      });
-
-    if (!admin) {
-      return res.status(401).json({
-        error: "Usuario no existe",
-      });
-    }
-
-    const validPassword =
-      await bcrypt.compare(
-        password,
-        admin.password
-      );
-
-    if (!validPassword) {
-      return res.status(401).json({
-        error:
-          "Contraseña incorrecta",
-      });
-    }
-
-    const token = jwt.sign(
-      {
-        adminId: admin.id,
-      },
-      JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
-
-    res.json({
-      token,
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      error: "Error login",
-    });
-  }
+app.get("/", (req, res) => {
+  res.send("Backend funcionando 🚀");
 });
 
 /* =========================
@@ -115,17 +51,16 @@ app.get("/pedidos", async (req, res) => {
         },
 
         orderBy: {
-          id: "desc",
+          createdAt: "desc",
         },
       });
 
     res.json(pedidos);
   } catch (error) {
-    console.error(error);
+    console.log(error);
 
     res.status(500).json({
-      error:
-        "Error obteniendo pedidos",
+      error: "Error obteniendo pedidos",
     });
   }
 });
@@ -136,34 +71,34 @@ app.get("/pedidos", async (req, res) => {
 
 app.post("/pedidos", async (req, res) => {
   try {
-    const pedido = req.body;
+    const {
+      mesa,
+      metodo,
+      total,
+      items,
+    } = req.body;
 
-    const nuevoPedido =
+    const numero = Math.floor(
+      Math.random() * 9000
+    );
+
+    const pedido =
       await prisma.pedido.create({
         data: {
-          numero: pedido.numero,
-
-          mesa: pedido.mesa,
-
-          metodo: pedido.metodo,
-
-          total: Number(
-            pedido.total
-          ),
-
-          estado: pedido.estado,
-
-          fecha: pedido.fecha,
+          numero,
+          mesa,
+          metodo,
+          total,
+          estado: "Pendiente",
 
           items: {
-            create: pedido.items.map(
+            create: items.map(
               (item) => ({
                 nombre:
                   item.nombre,
 
-                precio: Number(
-                  item.precio
-                ),
+                precio:
+                  item.precio,
 
                 qty: item.qty,
               })
@@ -176,16 +111,11 @@ app.post("/pedidos", async (req, res) => {
         },
       });
 
-    io.emit(
-      "nuevo-pedido",
-      nuevoPedido
-    );
+    io.emit("nuevo-pedido", pedido);
 
-    res.status(201).json(
-      nuevoPedido
-    );
+    res.json(pedido);
   } catch (error) {
-    console.error(error);
+    console.log(error);
 
     res.status(500).json({
       error:
@@ -202,14 +132,15 @@ app.put(
   "/pedidos/:id/estado",
   async (req, res) => {
     try {
-      const { id } = req.params;
-
-      const { estado } = req.body;
+      const { estado } =
+        req.body;
 
       const pedido =
         await prisma.pedido.update({
           where: {
-            id: Number(id),
+            id: Number(
+              req.params.id
+            ),
           },
 
           data: {
@@ -228,7 +159,7 @@ app.put(
 
       res.json(pedido);
     } catch (error) {
-      console.error(error);
+      console.log(error);
 
       res.status(500).json({
         error:
@@ -238,10 +169,16 @@ app.put(
   }
 );
 
-const PORT = 3000;
+/* =========================
+   START
+========================= */
+
+const PORT =
+  process.env.PORT || 3000;
 
 server.listen(PORT, () => {
   console.log(
-    `Servidor corriendo en puerto ${PORT}`
+    "Servidor corriendo en puerto",
+    PORT
   );
 });
