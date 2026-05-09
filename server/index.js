@@ -104,23 +104,27 @@ app.post(
             mesa,
             metodo,
             total,
-            estado: "Pendiente",
 
-            fecha: new Date(),
+            estado:
+              "Pendiente",
+
+            fecha:
+              new Date().toISOString(),
 
             items: {
-              create: items.map(
-                (item) => ({
-                  nombre:
-                    item.nombre,
+              create:
+                items.map(
+                  (item) => ({
+                    nombre:
+                      item.nombre,
 
-                  precio:
-                    item.precio,
+                    precio:
+                      item.precio,
 
-                  qty:
-                    item.qty,
-                })
-              ),
+                    qty:
+                      item.qty,
+                  })
+                ),
             },
           },
 
@@ -139,7 +143,8 @@ app.post(
       console.log(error);
 
       res.status(500).json({
-        error: error.message,
+        error:
+          error.message,
       });
     }
   }
@@ -183,7 +188,8 @@ app.put(
       console.log(error);
 
       res.status(500).json({
-        error: error.message,
+        error:
+          error.message,
       });
     }
   }
