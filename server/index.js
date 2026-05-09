@@ -60,7 +60,7 @@ app.get("/pedidos", async (req, res) => {
     console.log(error);
 
     res.status(500).json({
-      error: "Error obteniendo pedidos",
+      error: error.message,
     });
   }
 });
@@ -111,15 +111,17 @@ app.post("/pedidos", async (req, res) => {
         },
       });
 
-    io.emit("nuevo-pedido", pedido);
+    io.emit(
+      "nuevo-pedido",
+      pedido
+    );
 
     res.json(pedido);
   } catch (error) {
     console.log(error);
 
     res.status(500).json({
-      error:
-        "Error creando pedido",
+      error: error.message,
     });
   }
 });
@@ -162,15 +164,14 @@ app.put(
       console.log(error);
 
       res.status(500).json({
-        error:
-          "Error actualizando estado",
+        error: error.message,
       });
     }
   }
 );
 
 /* =========================
-   START
+START
 ========================= */
 
 const PORT =
