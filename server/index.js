@@ -51,7 +51,7 @@ app.get("/pedidos", async (req, res) => {
         },
 
         orderBy: {
-          createdAt: "desc",
+          fecha: "desc",
         },
       });
 
