@@ -34,9 +34,14 @@ export default function Cart() {
   const enviarPedido =
     async () => {
       try {
-        console.log(
-          "ENVIANDO"
-        );
+
+        if (
+          carrito.length === 0
+        ) {
+          return alert(
+            "Carrito vacío"
+          );
+        }
 
         const pedido = {
           mesa:
@@ -55,8 +60,11 @@ export default function Cart() {
         };
 
         console.log(
+          "ENVIANDO",
           pedido
         );
+
+        // 🔥 API
 
         const response =
           await api.post(
@@ -65,37 +73,40 @@ export default function Cart() {
           );
 
         console.log(
+          "RESPUESTA",
           response.data
         );
 
-        alert(
-          "Pedido enviado 🔥"
-        );
+        // 🔥 GUARDAR PEDIDO
+
+        const pedidoCreado =
+          response.data;
+
+        // 🔥 LIMPIAR
 
         vaciarCarrito();
 
-        // 🔥 ENVIAR AL CONFIRMED
-        // CON DATOS PEDIDO
+        // 🔥 IR A CONFIRMED
 
         navigate(
           "/confirmed",
           {
             state: {
               pedido:
-                response.data,
+                pedidoCreado,
             },
           }
         );
+
       } catch (error) {
-        console.log(
-          error.response
-            ?.data
-        );
+
+        console.log(error);
 
         alert(
           JSON.stringify(
             error.response
-              ?.data
+              ?.data ||
+              error.message
           )
         );
       }
@@ -103,6 +114,7 @@ export default function Cart() {
 
   return (
     <div className="max-w-md mx-auto p-4 pb-32">
+
       {/* VOLVER */}
 
       <button
@@ -123,6 +135,7 @@ export default function Cart() {
       {/* ITEMS */}
 
       <div className="flex flex-col gap-4">
+
         {carrito.map(
           (item) => (
             <div
@@ -161,11 +174,13 @@ export default function Cart() {
             </div>
           )
         )}
+
       </div>
 
       {/* PAGO */}
 
       <div className="mt-8 bg-white p-5 rounded-2xl shadow">
+
         <h2 className="font-bold text-xl mb-4">
           Método de Pago
         </h2>
@@ -202,6 +217,7 @@ export default function Cart() {
         {/* TOTAL */}
 
         <div className="mt-6 flex justify-between text-xl font-bold">
+
           <span>
             Total:
           </span>
@@ -211,6 +227,7 @@ export default function Cart() {
               subtotal
             )}
           </span>
+
         </div>
 
         {/* BTN */}
@@ -223,6 +240,7 @@ export default function Cart() {
         >
           Enviar Pedido
         </button>
+
       </div>
     </div>
   );
