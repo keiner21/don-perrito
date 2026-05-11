@@ -4,6 +4,10 @@ import {
   useRef,
 } from "react";
 
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import { api } from "../services/api";
 
 import { socket } from "../services/socket";
@@ -13,8 +17,12 @@ import { fmt } from "../utils/format";
 import ding from "../assets/ding.mp3";
 
 export default function Admin() {
-  const [pedidos, setPedidos] =
-    useState([]);
+  const navigate =
+    useNavigate();
+
+  const [pedidos,
+    setPedidos,
+  ] = useState([]);
 
   const audioRef = useRef(
     new Audio(ding)
@@ -26,7 +34,8 @@ export default function Admin() {
 
   const ventasTotales =
     pedidos.reduce(
-      (acc, p) => acc + p.total,
+      (acc, p) =>
+        acc + p.total,
       0
     );
 
@@ -43,7 +52,8 @@ export default function Admin() {
   const pedidosListos =
     pedidos.filter(
       (p) =>
-        p.estado === "Listo"
+        p.estado ===
+        "Listo"
     ).length;
 
   // =========================
@@ -56,35 +66,41 @@ export default function Admin() {
     socket.on(
       "nuevo-pedido",
       (pedido) => {
-
         // 🔔 sonido
         audioRef.current.play();
 
-        // agregar realtime
-        setPedidos((prev) => [
-          pedido,
-          ...prev,
-        ]);
+        // realtime
+        setPedidos(
+          (prev) => [
+            pedido,
+            ...prev,
+          ]
+        );
       }
     );
 
     socket.on(
       "pedido-actualizado",
-      (pedidoActualizado) => {
-
-        setPedidos((prev) =>
-          prev.map((p) =>
-            p.id ===
-            pedidoActualizado.id
-              ? pedidoActualizado
-              : p
-          )
+      (
+        pedidoActualizado
+      ) => {
+        setPedidos(
+          (prev) =>
+            prev.map(
+              (p) =>
+                p.id ===
+                pedidoActualizado.id
+                  ? pedidoActualizado
+                  : p
+            )
         );
       }
     );
 
     return () => {
-      socket.off("nuevo-pedido");
+      socket.off(
+        "nuevo-pedido"
+      );
 
       socket.off(
         "pedido-actualizado"
@@ -99,11 +115,17 @@ export default function Admin() {
   async function cargarPedidos() {
     try {
       const response =
-        await api.get("/pedidos");
+        await api.get(
+          "/pedidos"
+        );
 
-      setPedidos(response.data);
+      setPedidos(
+        response.data
+      );
     } catch (error) {
-      console.error(error);
+      console.error(
+        error
+      );
     }
   }
 
@@ -123,7 +145,9 @@ export default function Admin() {
         }
       );
     } catch (error) {
-      console.error(error);
+      console.error(
+        error
+      );
     }
   }
 
@@ -131,7 +155,9 @@ export default function Admin() {
   // COLORES ESTADO
   // =========================
 
-  const colorEstado = (estado) => {
+  const colorEstado = (
+    estado
+  ) => {
     switch (estado) {
       case "Pendiente":
         return "bg-yellow-100 text-yellow-700";
@@ -150,14 +176,24 @@ export default function Admin() {
     }
   };
 
+  // =========================
+  // LOGOUT
+  // =========================
+
+  function logout() {
+    localStorage.removeItem(
+      "token"
+    );
+
+    navigate("/login");
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-
       <div className="max-w-7xl mx-auto">
-
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
 
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-orange-600">
               🍔 Panel Admin
@@ -168,27 +204,41 @@ export default function Admin() {
             </p>
           </div>
 
-          <div className="bg-green-100 text-green-700 px-5 py-3 rounded-2xl font-medium">
-            🟢 Sistema Online
-          </div>
+          <div className="flex gap-3">
+            <div className="bg-green-100 text-green-700 px-5 py-3 rounded-2xl font-medium">
+              🟢 Sistema Online
+            </div>
 
+            <button
+              onClick={
+                logout
+              }
+              className="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-2xl font-medium transition"
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </div>
 
         {/* DASHBOARD */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10">
 
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10">
           {/* VENTAS */}
+
           <div className="bg-white rounded-3xl p-6 shadow-lg">
             <p className="text-gray-500 text-sm">
               Ventas Totales
             </p>
 
             <h2 className="text-3xl font-bold text-green-600 mt-3">
-              {fmt(ventasTotales)}
+              {fmt(
+                ventasTotales
+              )}
             </h2>
           </div>
 
           {/* PEDIDOS */}
+
           <div className="bg-white rounded-3xl p-6 shadow-lg">
             <p className="text-gray-500 text-sm">
               Pedidos
@@ -200,32 +250,38 @@ export default function Admin() {
           </div>
 
           {/* PENDIENTES */}
+
           <div className="bg-white rounded-3xl p-6 shadow-lg">
             <p className="text-gray-500 text-sm">
               Pendientes
             </p>
 
             <h2 className="text-3xl font-bold text-yellow-500 mt-3">
-              {pedidosPendientes}
+              {
+                pedidosPendientes
+              }
             </h2>
           </div>
 
           {/* LISTOS */}
+
           <div className="bg-white rounded-3xl p-6 shadow-lg">
             <p className="text-gray-500 text-sm">
               Listos
             </p>
 
             <h2 className="text-3xl font-bold text-blue-600 mt-3">
-              {pedidosListos}
+              {
+                pedidosListos
+              }
             </h2>
           </div>
-
         </div>
 
         {/* PEDIDOS */}
-        {pedidos.length === 0 ? (
 
+        {pedidos.length ===
+        0 ? (
           <div className="bg-white rounded-3xl p-12 text-center shadow-lg">
             <div className="text-6xl mb-4">
               🍔
@@ -235,30 +291,32 @@ export default function Admin() {
               No hay pedidos
             </p>
           </div>
-
         ) : (
-
           <div className="grid gap-6">
-
             {pedidos.map(
               (pedido) => (
-
                 <div
-                  key={pedido.id}
+                  key={
+                    pedido.id
+                  }
                   className="bg-white rounded-3xl shadow-lg p-6"
                 >
-
                   {/* HEADER PEDIDO */}
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
 
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
                     <div>
                       <h2 className="text-2xl font-bold">
                         Pedido #
-                        {pedido.numero}
+                        {
+                          pedido.numero
+                        }
                       </h2>
 
                       <p className="text-gray-500">
-                        Mesa #{pedido.mesa}
+                        Mesa #
+                        {
+                          pedido.mesa
+                        }
                       </p>
                     </div>
 
@@ -267,24 +325,33 @@ export default function Admin() {
                         pedido.estado
                       )}`}
                     >
-                      {pedido.estado}
+                      {
+                        pedido.estado
+                      }
                     </div>
-
                   </div>
 
                   {/* ITEMS */}
+
                   <div className="border-t border-b py-4 space-y-3">
-
                     {pedido.items.map(
-                      (item) => (
-
+                      (
+                        item
+                      ) => (
                         <div
-                          key={item.id}
+                          key={
+                            item.id
+                          }
                           className="flex justify-between"
                         >
                           <span>
-                            {item.qty}x{" "}
-                            {item.nombre}
+                            {
+                              item.qty
+                            }
+                            x{" "}
+                            {
+                              item.nombre
+                            }
                           </span>
 
                           <span className="font-medium">
@@ -294,25 +361,25 @@ export default function Admin() {
                             )}
                           </span>
                         </div>
-
                       )
                     )}
-
                   </div>
 
                   {/* FOOTER */}
+
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mt-6">
-
                     {/* INFO */}
-                    <div className="flex flex-col gap-2">
 
+                    <div className="flex flex-col gap-2">
                       <div>
                         <p className="text-gray-500 text-sm">
                           Método pago
                         </p>
 
                         <p className="font-semibold">
-                          {pedido.metodo}
+                          {
+                            pedido.metodo
+                          }
                         </p>
                       </div>
 
@@ -327,10 +394,10 @@ export default function Admin() {
                           ).toLocaleString()}
                         </p>
                       </div>
-
                     </div>
 
                     {/* TOTAL */}
+
                     <div>
                       <p className="text-gray-500 text-sm">
                         Total
@@ -344,8 +411,8 @@ export default function Admin() {
                     </div>
 
                     {/* BOTONES */}
-                    <div className="flex flex-wrap gap-2">
 
+                    <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() =>
                           cambiarEstado(
@@ -393,22 +460,14 @@ export default function Admin() {
                       >
                         Entregado
                       </button>
-
                     </div>
-
                   </div>
-
                 </div>
-
               )
             )}
-
           </div>
-
         )}
-
       </div>
-
     </div>
   );
 }
