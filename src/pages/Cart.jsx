@@ -13,6 +13,7 @@ import { fmt } from "../utils/format";
 import { api } from "../services/api";
 
 export default function Cart() {
+
   const navigate =
     useNavigate();
 
@@ -31,86 +32,78 @@ export default function Cart() {
   // ENVIAR PEDIDO
   // =========================
 
-  const enviarPedido =
-    async () => {
-      try {
+  async function enviarPedido() {
 
-        if (
-          carrito.length === 0
-        ) {
-          return alert(
-            "Carrito vacío"
-          );
-        }
+    try {
 
-        const pedido = {
-          mesa:
-            localStorage.getItem(
-              "mesa"
-            ) || "1",
+      if (
+        carrito.length === 0
+      ) {
+        alert(
+          "Carrito vacío"
+        );
 
-          metodo:
-            metodoPago,
+        return;
+      }
 
-          total:
-            subtotal,
+      const pedido = {
+        mesa:
+          localStorage.getItem(
+            "mesa"
+          ) || "1",
 
-          items:
-            carrito,
-        };
+        metodo:
+          metodoPago,
 
-        console.log(
-          "ENVIANDO",
+        total:
+          subtotal,
+
+        items:
+          carrito,
+      };
+
+      console.log(
+        "ENVIANDO",
+        pedido
+      );
+
+      const response =
+        await api.post(
+          "/pedidos",
           pedido
         );
 
-        // 🔥 API
+      console.log(
+        response.data
+      );
 
-        const response =
-          await api.post(
-            "/pedidos",
-            pedido
-          );
+      // 🔥 LIMPIAR
+      vaciarCarrito();
 
-        console.log(
-          "RESPUESTA",
-          response.data
-        );
+      // 🔥 IR A CONFIRMED
+      navigate(
+        "/confirmed",
+        {
+          state: {
+            pedido:
+              response.data,
+          },
+        }
+      );
 
-        // 🔥 GUARDAR PEDIDO
+    } catch (error) {
 
-        const pedidoCreado =
-          response.data;
+      console.log(error);
 
-        // 🔥 LIMPIAR
-
-        vaciarCarrito();
-
-        // 🔥 IR A CONFIRMED
-
-        navigate(
-          "/confirmed",
-          {
-            state: {
-              pedido:
-                pedidoCreado,
-            },
-          }
-        );
-
-      } catch (error) {
-
-        console.log(error);
-
-        alert(
-          JSON.stringify(
-            error.response
-              ?.data ||
-              error.message
-          )
-        );
-      }
-    };
+      alert(
+        JSON.stringify(
+          error.response
+            ?.data ||
+            error.message
+        )
+      );
+    }
+  }
 
   return (
     <div className="max-w-md mx-auto p-4 pb-32">
@@ -126,7 +119,7 @@ export default function Cart() {
         ← Volver
       </button>
 
-      {/* TITLE */}
+      {/* TITULO */}
 
       <h1 className="text-3xl font-bold mb-6">
         Tu Pedido
@@ -138,11 +131,14 @@ export default function Cart() {
 
         {carrito.map(
           (item) => (
+
             <div
               key={item.id}
               className="bg-white p-4 rounded-2xl shadow flex justify-between items-center"
             >
+
               <div>
+
                 <h2 className="font-semibold">
                   {item.nombre}
                 </h2>
@@ -159,6 +155,7 @@ export default function Cart() {
                       item.qty
                   )}
                 </p>
+
               </div>
 
               <button
@@ -171,7 +168,9 @@ export default function Cart() {
               >
                 X
               </button>
+
             </div>
+
           )
         )}
 
@@ -191,27 +190,28 @@ export default function Cart() {
           }
           onChange={(e) =>
             setMetodoPago(
-              e.target
-                .value
+              e.target.value
             )
           }
           className="w-full border rounded-xl p-3"
         >
-          <option>
+
+          <option value="Efectivo">
             Efectivo
           </option>
 
-          <option>
+          <option value="Nequi">
             Nequi
           </option>
 
-          <option>
+          <option value="Daviplata">
             Daviplata
           </option>
 
-          <option>
+          <option value="Tarjeta">
             Tarjeta
           </option>
+
         </select>
 
         {/* TOTAL */}
@@ -242,6 +242,7 @@ export default function Cart() {
         </button>
 
       </div>
+
     </div>
   );
 }
