@@ -4,6 +4,12 @@ const http = require("http");
 
 const { Server } = require("socket.io");
 
+const bcrypt =
+  require("bcryptjs");
+
+const jwt =
+  require("jsonwebtoken");
+
 const {
   PrismaClient,
 } = require("@prisma/client");
@@ -46,6 +52,80 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
+   LOGIN ADMIN
+========================= */
+
+app.post(
+  "/login",
+  async (req, res) => {
+    try {
+      const {
+        email,
+        password,
+      } = req.body;
+
+      const admin =
+        await prisma.admin.findUnique(
+          {
+            where: {
+              email,
+            },
+          }
+        );
+
+      if (!admin) {
+        return res
+          .status(401)
+          .json({
+            error:
+              "Usuario no encontrado",
+          });
+      }
+
+      const valid =
+        await bcrypt.compare(
+          password,
+          admin.password
+        );
+
+      if (!valid) {
+        return res
+          .status(401)
+          .json({
+            error:
+              "Contraseña incorrecta",
+          });
+      }
+
+      const token =
+        jwt.sign(
+          {
+            id: admin.id,
+          },
+
+          "donperrito",
+
+          {
+            expiresIn:
+              "7d",
+          }
+        );
+
+      res.json({
+        token,
+      });
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        error:
+          error.message,
+      });
+    }
+  }
+);
+
+/* =========================
    OBTENER PEDIDOS
 ========================= */
 
@@ -71,7 +151,8 @@ app.get(
       console.log(error);
 
       res.status(500).json({
-        error: error.message,
+        error:
+          error.message,
       });
     }
   }
