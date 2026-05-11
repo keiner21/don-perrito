@@ -27,6 +27,10 @@ export default function Cart() {
     setMetodoPago,
   ] = useState("Efectivo");
 
+  // =========================
+  // ENVIAR PEDIDO
+  // =========================
+
   const enviarPedido =
     async () => {
       try {
@@ -54,14 +58,14 @@ export default function Cart() {
           pedido
         );
 
-        const res =
+        const response =
           await api.post(
             "/pedidos",
             pedido
           );
 
         console.log(
-          res.data
+          response.data
         );
 
         alert(
@@ -70,7 +74,18 @@ export default function Cart() {
 
         vaciarCarrito();
 
-        navigate("/");
+        // 🔥 ENVIAR AL CONFIRMED
+        // CON DATOS PEDIDO
+
+        navigate(
+          "/confirmed",
+          {
+            state: {
+              pedido:
+                response.data,
+            },
+          }
+        );
       } catch (error) {
         console.log(
           error.response
@@ -88,6 +103,8 @@ export default function Cart() {
 
   return (
     <div className="max-w-md mx-auto p-4 pb-32">
+      {/* VOLVER */}
+
       <button
         onClick={() =>
           navigate(-1)
@@ -97,9 +114,13 @@ export default function Cart() {
         ← Volver
       </button>
 
+      {/* TITLE */}
+
       <h1 className="text-3xl font-bold mb-6">
         Tu Pedido
       </h1>
+
+      {/* ITEMS */}
 
       <div className="flex flex-col gap-4">
         {carrito.map(
@@ -142,6 +163,8 @@ export default function Cart() {
         )}
       </div>
 
+      {/* PAGO */}
+
       <div className="mt-8 bg-white p-5 rounded-2xl shadow">
         <h2 className="font-bold text-xl mb-4">
           Método de Pago
@@ -176,6 +199,8 @@ export default function Cart() {
           </option>
         </select>
 
+        {/* TOTAL */}
+
         <div className="mt-6 flex justify-between text-xl font-bold">
           <span>
             Total:
@@ -187,6 +212,8 @@ export default function Cart() {
             )}
           </span>
         </div>
+
+        {/* BTN */}
 
         <button
           onClick={

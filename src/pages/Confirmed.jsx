@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   useLocation,
@@ -10,22 +13,64 @@ import { socket } from "../services/socket";
 import { fmt } from "../utils/format";
 
 export default function Confirmed() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const { state } = useLocation();
+  const { state } =
+    useLocation();
 
-  const [pedido, setPedido] =
-    useState(state?.pedido);
+  const [pedido,
+    setPedido,
+  ] = useState(
+    state?.pedido
+  );
+
+  // =========================
+  // VALIDAR PEDIDO
+  // =========================
+
+  if (!pedido) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+        <div className="bg-white p-10 rounded-3xl shadow-xl text-center w-full max-w-md">
+          <div className="text-6xl mb-4">
+            🍔
+          </div>
+
+          <h1 className="text-2xl font-bold mb-4">
+            Pedido no encontrado
+          </h1>
+
+          <button
+            onClick={() =>
+              navigate("/")
+            }
+            className="bg-black text-white px-6 py-3 rounded-2xl"
+          >
+            Volver al menú
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================
+  // SOCKET REALTIME
+  // =========================
 
   useEffect(() => {
     socket.on(
       "pedido-actualizado",
-      (pedidoActualizado) => {
+      (
+        pedidoActualizado
+      ) => {
         if (
           pedidoActualizado.id ===
           pedido.id
         ) {
-          setPedido(pedidoActualizado);
+          setPedido(
+            pedidoActualizado
+          );
         }
       }
     );
@@ -37,47 +82,63 @@ export default function Confirmed() {
     };
   }, [pedido]);
 
-  const colorEstado = () => {
-    switch (pedido.estado) {
-      case "Pendiente":
-        return "bg-yellow-100 text-yellow-700";
+  // =========================
+  // COLOR ESTADO
+  // =========================
 
-      case "Preparando":
-        return "bg-blue-100 text-blue-700";
+  const colorEstado =
+    () => {
+      switch (
+        pedido.estado
+      ) {
+        case "Pendiente":
+          return "bg-yellow-100 text-yellow-700";
 
-      case "Listo":
-        return "bg-green-100 text-green-700";
+        case "Preparando":
+          return "bg-blue-100 text-blue-700";
 
-      case "Entregado":
-        return "bg-gray-200 text-gray-700";
+        case "Listo":
+          return "bg-green-100 text-green-700";
 
-      default:
-        return "bg-gray-100";
-    }
-  };
+        case "Entregado":
+          return "bg-gray-200 text-gray-700";
 
-  const mensajeEstado = () => {
-    switch (pedido.estado) {
-      case "Pendiente":
-        return "Tu pedido fue recibido";
+        default:
+          return "bg-gray-100";
+      }
+    };
 
-      case "Preparando":
-        return "Estamos preparando tu pedido 🍳";
+  // =========================
+  // MENSAJE ESTADO
+  // =========================
 
-      case "Listo":
-        return "Tu pedido está listo ✅";
+  const mensajeEstado =
+    () => {
+      switch (
+        pedido.estado
+      ) {
+        case "Pendiente":
+          return "Tu pedido fue recibido";
 
-      case "Entregado":
-        return "Pedido entregado 🎉";
+        case "Preparando":
+          return "Estamos preparando tu pedido 🍳";
 
-      default:
-        return "";
-    }
-  };
+        case "Listo":
+          return "Tu pedido está listo ✅";
+
+        case "Entregado":
+          return "Pedido entregado 🎉";
+
+        default:
+          return "";
+      }
+    };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg">
+        {/* TOP */}
+
         <div className="text-center">
           <div className="text-7xl mb-4">
             🍔
@@ -85,54 +146,87 @@ export default function Confirmed() {
 
           <h1 className="text-3xl font-bold mb-2">
             Pedido #
-            {pedido.numero}
+            {
+              pedido.numero
+            }
           </h1>
 
           <p className="text-gray-500 mb-6">
-            Mesa #{pedido.mesa}
+            Mesa #
+            {
+              pedido.mesa
+            }
           </p>
+
+          {/* ESTADO */}
 
           <div
             className={`inline-block px-5 py-3 rounded-full font-medium text-sm mb-6 ${colorEstado()}`}
           >
-            {pedido.estado}
+            {
+              pedido.estado
+            }
           </div>
+
+          {/* MENSAJE */}
 
           <p className="text-lg font-medium mb-8">
             {mensajeEstado()}
           </p>
         </div>
 
-        <div className="border-t border-b py-5 space-y-3">
-          {pedido.items.map((item) => (
-            <div
-              key={item.id}
-              className="flex justify-between"
-            >
-              <span>
-                {item.qty}x {item.nombre}
-              </span>
+        {/* ITEMS */}
 
-              <span>
-                {fmt(
-                  item.precio *
+        <div className="border-t border-b py-5 space-y-3">
+          {pedido.items.map(
+            (item) => (
+              <div
+                key={
+                  item.id
+                }
+                className="flex justify-between"
+              >
+                <span>
+                  {
                     item.qty
-                )}
-              </span>
-            </div>
-          ))}
+                  }
+                  x{" "}
+                  {
+                    item.nombre
+                  }
+                </span>
+
+                <span>
+                  {fmt(
+                    item.precio *
+                      item.qty
+                  )}
+                </span>
+              </div>
+            )
+          )}
         </div>
 
+        {/* TOTAL */}
+
         <div className="flex justify-between mt-6 text-xl font-bold">
-          <span>Total</span>
+          <span>
+            Total
+          </span>
 
           <span className="text-orange-600">
-            {fmt(pedido.total)}
+            {fmt(
+              pedido.total
+            )}
           </span>
         </div>
 
+        {/* BOTON */}
+
         <button
-          onClick={() => navigate("/")}
+          onClick={() =>
+            navigate("/")
+          }
           className="w-full mt-8 bg-black text-white py-4 rounded-2xl"
         >
           Volver al menú
