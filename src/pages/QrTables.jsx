@@ -14,7 +14,7 @@ export default function QrTables() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {MESAS.map((mesa) => {
-          const url = `http://localhost:5173/mesa/${mesa}`;
+          const url =`https://don-perrito.vercel.app/mesa/${mesa}`;
 
           return (
             <div
