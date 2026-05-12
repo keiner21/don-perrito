@@ -20,13 +20,35 @@ export default function Cart() {
   const {
     carrito,
     subtotal,
-    eliminar,
-    vaciarCarrito,
+    limpiarCarrito,
   } = useCart();
 
   const [metodoPago,
     setMetodoPago,
   ] = useState("Efectivo");
+
+  // =========================
+  // ELIMINAR ITEM
+  // =========================
+
+  const eliminar =
+    (id) => {
+
+      const nuevo =
+        carrito.filter(
+          (item) =>
+            item.id !== id
+        );
+
+      localStorage.setItem(
+        "carrito",
+        JSON.stringify(
+          nuevo
+        )
+      );
+
+      window.location.reload();
+    };
 
   // =========================
   // ENVIAR PEDIDO
@@ -78,7 +100,7 @@ export default function Cart() {
       );
 
       // 🔥 LIMPIAR
-      vaciarCarrito();
+      limpiarCarrito();
 
       // 🔥 IR A CONFIRMED
       navigate(
