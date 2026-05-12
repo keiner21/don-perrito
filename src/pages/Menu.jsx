@@ -1,4 +1,5 @@
 import { MENU } from "../data/menu";
+
 import { fmt } from "../utils/format";
 
 import { useCart } from "../context/CartContext";
@@ -8,13 +9,15 @@ import {
 } from "react-router-dom";
 
 export default function Menu() {
+
   const {
     agregar,
     totalItems,
     subtotal,
   } = useCart();
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const mesa =
     localStorage.getItem("mesa") ||
@@ -22,9 +25,13 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+
       {/* HEADER */}
+
       <div className="bg-black text-white p-5 flex justify-between items-center shadow-lg">
+
         <div>
+
           <h1 className="text-3xl font-bold text-orange-500">
             🌭 Don Perrito
           </h1>
@@ -33,32 +40,47 @@ export default function Menu() {
             Fast Food
           </p>
 
-          {/* MESA ACTUAL */}
+          {/* MESA */}
+
           <p className="text-orange-300 text-sm mt-1">
             Mesa #{mesa}
           </p>
+
         </div>
+
+        {/* ADMIN */}
 
         <button
           onClick={() =>
-            navigate("/admin")
+            window.open(
+              "/admin",
+              "_blank"
+            )
           }
           className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-xl font-medium transition"
         >
           ⚙️ Admin
         </button>
+
       </div>
 
       {/* CONTENIDO */}
+
       <div className="max-w-md mx-auto p-4 pb-28">
+
         <div className="flex flex-col gap-4">
+
           {MENU.map((item) => (
+
             <div
               key={item.id}
               className="bg-white rounded-2xl p-4 shadow hover:shadow-lg transition"
             >
+
               <div className="flex items-center justify-between gap-4">
+
                 <div>
+
                   <h2 className="font-semibold text-lg">
                     {item.nombre}
                   </h2>
@@ -79,18 +101,25 @@ export default function Menu() {
                   >
                     Agregar
                   </button>
+
                 </div>
 
                 <div className="text-5xl">
                   {item.emoji}
                 </div>
+
               </div>
+
             </div>
+
           ))}
+
         </div>
 
-        {/* BOTÓN CARRITO */}
+        {/* BOTON CARRITO */}
+
         {totalItems > 0 && (
+
           <button
             onClick={() =>
               navigate("/cart")
@@ -101,8 +130,11 @@ export default function Menu() {
             {totalItems}) ·{" "}
             {fmt(subtotal)}
           </button>
+
         )}
+
       </div>
+
     </div>
   );
 }
