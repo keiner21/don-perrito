@@ -1,191 +1,149 @@
-export const MENU = [
+import burger1 from "../assets/productos/9cc8e_aaad1f9b690b4176a0cef213b971f787~mv2.jpg";
 
-  // =========================
-  // HAMBURGUESAS
-  // =========================
+import coca from "../assets/productos/7702535011089_0.png";
+
+import burger2 from "../assets/productos/david-foodphotostyle-F94JrMckw-unsplash.jpg";
+
+import hotdog1 from "../assets/productos/delicious-hot-dogs-with-mustard-onion.jpg";
+
+import pepsi from "../assets/productos/descargar.jpg";
+
+import salchi from "../assets/productos/emplatado-final-de-la-salchipapa.jpg";
+
+import burger3 from "../assets/productos/hamburguesa-clasica.jpg";
+
+import hotdog2 from "../assets/productos/high-angle-delicious-hot-dog-fries.jpg";
+
+import hit from "../assets/productos/Hit-Mango-Pet-500-ml-706021_a.png";
+
+import agua from "../assets/productos/ME00047.png";
+
+import nuggets from "../assets/productos/pexels-medinaonfire-7339302.jpg";
+
+import salchi2 from "../assets/productos/typical-latin-america-salchipapas-sausages-260nw-154116655.png";
+
+import burger4 from "../assets/productos/vertical-closeup-shot-tasty-burger-with-bacon-black-wall.jpg";
+
+export const MENU = [
 
   {
     id: 1,
     nombre: "Hamburguesa Clásica",
     descripcion:
-      "Carne, queso, lechuga y papas",
+      "Carne, queso y papas",
     precio: 14000,
-    emoji: "🍔",
     categoria: "Hamburguesas",
-    imagen:
-      "/productos/burger1.jpg",
+    imagen: burger1,
   },
 
   {
     id: 2,
-    nombre: "Hamburguesa Doble",
+    nombre: "Hamburguesa BBQ",
     descripcion:
-      "Doble carne y doble queso",
-    precio: 18000,
-    emoji: "🍔",
+      "BBQ y tocineta",
+    precio: 17000,
     categoria: "Hamburguesas",
-    imagen:
-      "/productos/burger2.jpg",
+    imagen: burger2,
   },
 
   {
     id: 3,
-    nombre: "Hamburguesa BBQ",
+    nombre: "Hamburguesa Premium",
     descripcion:
-      "Tocineta y salsa BBQ",
-    precio: 17000,
-    emoji: "🍔",
+      "Doble carne",
+    precio: 19000,
     categoria: "Hamburguesas",
-    imagen:
-      "/productos/burger3.jpg",
+    imagen: burger4,
   },
-
-  // =========================
-  // PERRITOS
-  // =========================
 
   {
     id: 4,
-    nombre: "Perrito Clásico",
+    nombre: "Perro Clásico",
     descripcion:
-      "Salchicha, queso y ripio",
+      "Ripio y queso",
     precio: 10000,
-    emoji: "🌭",
-    categoria: "Perros Calientes",
-    imagen:
-      "/productos/hotdog1.jpg",
+    categoria: "Perros",
+    imagen: hotdog1,
   },
 
   {
     id: 5,
-    nombre: "Perrito Especial",
+    nombre: "Perro Especial",
     descripcion:
-      "Doble queso y tocineta",
+      "Tocineta y queso",
     precio: 13000,
-    emoji: "🌭",
-    categoria: "Perros Calientes",
-    imagen:
-      "/productos/hotdog2.jpg",
+    categoria: "Perros",
+    imagen: hotdog2,
   },
 
   {
     id: 6,
-    nombre: "Perrito Ranchero",
+    nombre: "Salchipapa",
     descripcion:
-      "Maíz, ripio y salsa ranch",
-    precio: 12000,
-    emoji: "🌭",
-    categoria: "Perros Calientes",
-    imagen:
-      "/productos/hotdog3.jpg",
+      "Papas y salchicha",
+    precio: 15000,
+    categoria: "Salchipapas",
+    imagen: salchi,
   },
-
-  // =========================
-  // SALCHIPAPAS
-  // =========================
 
   {
     id: 7,
-    nombre: "Salchipapa Personal",
+    nombre: "Salchipapa Mixta",
     descripcion:
-      "Papas, salchicha y queso",
-    precio: 14000,
-    emoji: "🍟",
+      "Pollo y carne",
+    precio: 22000,
     categoria: "Salchipapas",
-    imagen:
-      "/productos/salchi1.jpg",
+    imagen: salchi2,
   },
 
   {
     id: 8,
-    nombre: "Salchipapa Mixta",
+    nombre: "Coca Cola",
     descripcion:
-      "Pollo, carne y salchicha",
-    precio: 22000,
-    emoji: "🍟",
-    categoria: "Salchipapas",
-    imagen:
-      "/productos/salchi2.jpg",
+      "400ml",
+    precio: 4000,
+    categoria: "Bebidas",
+    imagen: coca,
   },
-
-  // =========================
-  // BEBIDAS
-  // =========================
 
   {
     id: 9,
-    nombre: "Coca Cola",
+    nombre: "Pepsi",
     descripcion:
-      "Botella 400ml",
+      "400ml",
     precio: 4000,
-    emoji: "🥤",
     categoria: "Bebidas",
-    imagen:
-      "/productos/coca.jpg",
+    imagen: pepsi,
   },
 
   {
     id: 10,
-    nombre: "Pepsi",
+    nombre: "Jugo Hit",
     descripcion:
-      "Botella 400ml",
-    precio: 4000,
-    emoji: "🥤",
+      "Mango",
+    precio: 3500,
     categoria: "Bebidas",
-    imagen:
-      "/productos/pepsi.jpg",
+    imagen: hit,
   },
 
   {
     id: 11,
-    nombre: "Jugo Hit",
+    nombre: "Agua",
     descripcion:
-      "Mango o mora",
-    precio: 3500,
-    emoji: "🧃",
+      "Botella",
+    precio: 2500,
     categoria: "Bebidas",
-    imagen:
-      "/productos/hit.jpg",
+    imagen: agua,
   },
 
   {
     id: 12,
-    nombre: "Agua",
-    descripcion:
-      "Botella personal",
-    precio: 2500,
-    emoji: "💧",
-    categoria: "Bebidas",
-    imagen:
-      "/productos/agua.jpg",
-  },
-
-  // =========================
-  // ADICIONALES
-  // =========================
-
-  {
-    id: 13,
-    nombre: "Papas Francesas",
-    descripcion:
-      "Porción personal",
-    precio: 7000,
-    emoji: "🍟",
-    categoria: "Adicionales",
-    imagen:
-      "/productos/papas.jpg",
-  },
-
-  {
-    id: 14,
     nombre: "Nuggets",
     descripcion:
       "6 unidades",
     precio: 9000,
-    emoji: "🍗",
     categoria: "Adicionales",
-    imagen:
-      "/productos/nuggets.jpg",
+    imagen: nuggets,
   },
 
 ];
