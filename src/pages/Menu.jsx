@@ -35,6 +35,17 @@ export default function Menu() {
       )
     )];
 
+  const imagenMenuClass = (item) => {
+    const base =
+      "w-full h-full transition duration-300 group-hover:scale-105";
+
+    if (item.categoria === "Bebidas") {
+      return `${base} object-contain p-6`;
+    }
+
+    return `${base} object-cover`;
+  };
+
   return (
 
     <div className="min-h-screen bg-gray-100">
@@ -110,16 +121,18 @@ export default function Menu() {
 
                     <div
                       key={item.id}
-                      className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300"
+                      className="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300"
                     >
 
                       {/* IMAGEN */}
 
-                      <img
-                        src={item.imagen}
-                        alt={item.nombre}
-                        className="w-full h-56 object-cover"
-                      />
+                      <div className="h-56 w-full bg-orange-50 overflow-hidden flex items-center justify-center">
+                        <img
+                          src={item.imagen}
+                          alt={item.nombre}
+                          className={imagenMenuClass(item)}
+                        />
+                      </div>
 
                       {/* INFO */}
 
