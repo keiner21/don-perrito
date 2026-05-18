@@ -1,14 +1,14 @@
-import burger1 from "../assets/productos/9cc8e_aaad1f9b690b4176a0cef213b971f787~mv2.jpg";
+import burger1 from "../assets/productos/29cc8e_aaad1f9b690b4176a0cef213b971f787~mv2.jpg";
 
 import coca from "../assets/productos/7702535011089_0.png";
 
-import burger2 from "../assets/productos/david-foodphotostyle-F94JrMckw-unsplash.jpg";
+import burger2 from "../assets/productos/david-foodphototasty-E94j3rMcxlw-unsplash.jpg";
 
 import hotdog1 from "../assets/productos/delicious-hot-dogs-with-mustard-onion.jpg";
 
 import pepsi from "../assets/productos/descargar.jpg";
 
-import salchi from "../assets/productos/emplatado-final-de-la-salchipapa.jpg";
+import salchi from "../assets/productos/emplatado-final-de-las-salchipapas.jpg";
 
 import burger3 from "../assets/productos/hamburguesa-clasica.jpg";
 
@@ -20,7 +20,7 @@ import agua from "../assets/productos/ME00047.png";
 
 import nuggets from "../assets/productos/pexels-medinaonfire-7339302.jpg";
 
-import salchi2 from "../assets/productos/typical-latin-america-salchipapas-sausages-260nw-154116655.png";
+import salchi2 from "../assets/productos/typical-latin-america-salchipapa-sausages-260nw-1594116655.png";
 
 import burger4 from "../assets/productos/vertical-closeup-shot-tasty-burger-with-bacon-black-wall.jpg";
 
