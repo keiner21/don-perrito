@@ -35,7 +35,7 @@ app.use(express.json());
    SOCKET
 ========================= */
 
-io.on("connection", (socket) => {
+io.on("connection", () => {
   console.log(
     "Cliente conectado"
   );

@@ -10,8 +10,6 @@ import pepsi from "../assets/productos/descargar.jpg";
 
 import salchi from "../assets/productos/emplatado-final-de-las-salchipapas.jpg";
 
-import burger3 from "../assets/productos/hamburguesa-clasica.jpg";
-
 import hotdog2 from "../assets/productos/high-angle-delicious-hot-dog-fries.jpg";
 
 import hit from "../assets/productos/Hit-Mango-Pet-500-ml-706021_a.png";

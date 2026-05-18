@@ -1,347 +1,247 @@
 import { useState } from "react";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-import {
-  useCart,
-} from "../context/CartContext";
-
-import { fmt } from "../utils/format";
+import { useCart } from "../context/CartContext";
 
 import { api } from "../services/api";
 
-export default function Cart() {
+import { fmt } from "../utils/format";
 
-  const navigate =
-    useNavigate();
+const METODOS_PAGO = ["Efectivo", "Nequi", "Daviplata", "Tarjeta"];
+
+export default function Cart() {
+  const navigate = useNavigate();
 
   const {
     carrito,
     subtotal,
+    totalItems,
+    cambiarQty,
+    eliminar,
     limpiarCarrito,
   } = useCart();
 
-  const [metodoPago,
-    setMetodoPago,
-  ] = useState("Efectivo");
-
-  const [loading,
-    setLoading,
-  ] = useState(false);
-
-  // =========================
-  // ELIMINAR ITEM
-  // =========================
-
-  const eliminar =
-    (id) => {
-
-      const nuevo =
-        carrito.filter(
-          (item) =>
-            item.id !== id
-        );
-
-      localStorage.setItem(
-        "carrito",
-        JSON.stringify(
-          nuevo
-        )
-      );
-
-      window.location.reload();
-    };
-
-  // =========================
-  // ENVIAR PEDIDO
-  // =========================
+  const [metodoPago, setMetodoPago] = useState("Efectivo");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function enviarPedido() {
+    if (carrito.length === 0) {
+      setError("Agrega al menos un producto antes de enviar el pedido.");
+      return;
+    }
 
     try {
-
-      if (
-        carrito.length === 0
-      ) {
-        alert(
-          "Carrito vacío"
-        );
-
-        return;
-      }
-
+      setError("");
       setLoading(true);
 
       const pedido = {
-
-        mesa:
-          localStorage.getItem(
-            "mesa"
-          ) || "1",
-
-        metodo:
-          metodoPago,
-
-        total:
-          subtotal,
-
-        items:
-          carrito,
+        mesa: localStorage.getItem("mesa") || "1",
+        metodo: metodoPago,
+        total: subtotal,
+        items: carrito,
       };
 
-      console.log(
-        "ENVIANDO",
-        pedido
-      );
+      const response = await api.post("/pedidos", pedido);
 
-      const response =
-        await api.post(
-          "/pedidos",
-          pedido
-        );
-
-      console.log(
-        response.data
-      );
-
-      // =========================
-      // GUARDAR PEDIDO
-      // =========================
-
-      localStorage.setItem(
-        "ultimoPedido",
-        JSON.stringify(
-          response.data
-        )
-      );
-
-      // =========================
-      // LIMPIAR
-      // =========================
+      localStorage.setItem("ultimoPedido", JSON.stringify(response.data));
 
       limpiarCarrito();
 
-      localStorage.removeItem(
-        "carrito"
+      navigate("/confirmed", {
+        state: {
+          pedido: response.data,
+        },
+      });
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "No pudimos enviar el pedido. Intenta de nuevo."
       );
-
-      // =========================
-      // REDIRECT
-      // =========================
-
-      navigate(
-        "/confirmed",
-        {
-          state: {
-            pedido:
-              response.data,
-          },
-        }
-      );
-
-    } catch (error) {
-
-      console.log(error);
-
-      alert(
-        JSON.stringify(
-          error.response
-            ?.data ||
-            error.message
-        )
-      );
-
     } finally {
-
       setLoading(false);
     }
   }
 
-  // =========================
-  // CARRITO VACIO
-  // =========================
-
   if (carrito.length === 0) {
-
     return (
-
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-
-        <div className="bg-white rounded-3xl shadow-xl p-10 text-center w-full max-w-md">
-
-          <div className="text-7xl mb-5">
+      <div className="flex min-h-screen items-center justify-center bg-stone-100 p-6">
+        <div className="w-full max-w-md rounded-3xl bg-white p-10 text-center shadow-xl">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-orange-100 text-4xl">
             🛒
           </div>
 
-          <h1 className="text-3xl font-bold mb-3">
+          <h1 className="text-3xl font-black">
             Carrito vacío
           </h1>
 
-          <p className="text-gray-500 mb-8">
-            Agrega productos al pedido
+          <p className="mb-8 mt-3 text-gray-500">
+            Agrega productos desde el menú para armar tu pedido.
           </p>
 
           <button
-            onClick={() =>
-              navigate("/")
-            }
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-semibold transition"
+            onClick={() => navigate("/")}
+            className="w-full rounded-2xl bg-orange-600 py-4 font-bold text-white transition hover:bg-orange-700"
           >
             Volver al menú
           </button>
-
         </div>
-
       </div>
     );
   }
 
   return (
-
-    <div className="max-w-md mx-auto p-4 pb-32">
-
-      {/* VOLVER */}
-
-      <button
-        onClick={() =>
-          navigate(-1)
-        }
-        className="mb-4 text-orange-600"
-      >
-        ← Volver
-      </button>
-
-      {/* TITULO */}
-
-      <h1 className="text-3xl font-bold mb-6">
-        Tu Pedido
-      </h1>
-
-      {/* ITEMS */}
-
-      <div className="flex flex-col gap-4">
-
-        {carrito.map(
-          (item) => (
-
-            <div
-              key={item.id}
-              className="bg-white p-4 rounded-2xl shadow flex justify-between items-center"
-            >
-
-              <div>
-
-                <h2 className="font-semibold text-lg">
-                  {item.nombre}
-                </h2>
-
-                <p className="text-sm text-gray-500">
-                  Cantidad:
-                  {" "}
-                  {item.qty}
-                </p>
-
-                <p className="text-orange-600 font-bold mt-1">
-                  {fmt(
-                    item.precio *
-                      item.qty
-                  )}
-                </p>
-
-              </div>
-
-              <button
-                onClick={() =>
-                  eliminar(
-                    item.id
-                  )
-                }
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition"
-              >
-                X
-              </button>
-
-            </div>
-
-          )
-        )}
-
-      </div>
-
-      {/* PAGO */}
-
-      <div className="mt-8 bg-white p-5 rounded-2xl shadow">
-
-        <h2 className="font-bold text-xl mb-4">
-          Método de Pago
-        </h2>
-
-        <select
-          value={
-            metodoPago
-          }
-          onChange={(e) =>
-            setMetodoPago(
-              e.target.value
-            )
-          }
-          className="w-full border rounded-xl p-3"
-        >
-
-          <option value="Efectivo">
-            Efectivo
-          </option>
-
-          <option value="Nequi">
-            Nequi
-          </option>
-
-          <option value="Daviplata">
-            Daviplata
-          </option>
-
-          <option value="Tarjeta">
-            Tarjeta
-          </option>
-
-        </select>
-
-        {/* TOTAL */}
-
-        <div className="mt-6 flex justify-between text-xl font-bold">
-
-          <span>
-            Total:
-          </span>
-
-          <span className="text-orange-600">
-            {fmt(
-              subtotal
-            )}
-          </span>
-
-        </div>
-
-        {/* BTN */}
-
+    <div className="min-h-screen bg-stone-100 px-4 py-6 pb-32">
+      <div className="mx-auto max-w-3xl">
         <button
-          onClick={
-            enviarPedido
-          }
-          disabled={loading}
-          className="w-full mt-6 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white py-4 rounded-2xl text-lg font-semibold transition"
+          onClick={() => navigate(-1)}
+          className="mb-5 rounded-full bg-white px-4 py-2 text-sm font-bold text-orange-700 shadow-sm transition hover:bg-orange-50"
         >
-
-          {loading
-            ? "Enviando..."
-            : "Enviar Pedido"}
-
+          ← Volver
         </button>
 
-      </div>
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wide text-orange-600">
+              Mesa #{localStorage.getItem("mesa") || "1"}
+            </p>
 
+            <h1 className="text-3xl font-black text-gray-900">
+              Tu pedido
+            </h1>
+          </div>
+
+          <p className="text-sm font-semibold text-gray-500">
+            {totalItems} producto{totalItems === 1 ? "" : "s"}
+          </p>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[1fr_22rem]">
+          <section className="space-y-4">
+            {carrito.map((item) => (
+              <article
+                key={item.id}
+                className="rounded-3xl bg-white p-4 shadow-lg"
+              >
+                <div className="flex gap-4">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-orange-50">
+                    <img
+                      src={item.imagen}
+                      alt={item.nombre}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="font-black text-gray-900">
+                          {item.nombre}
+                        </h2>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                          {fmt(item.precio)} c/u
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => eliminar(item.id)}
+                        className="rounded-xl bg-red-50 px-3 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-center rounded-2xl bg-gray-100 p-1">
+                        <button
+                          onClick={() => cambiarQty(item.id, -1)}
+                          className="h-10 w-10 rounded-xl bg-white text-lg font-black shadow-sm transition hover:bg-gray-200"
+                          aria-label={`Restar ${item.nombre}`}
+                        >
+                          -
+                        </button>
+
+                        <span className="w-12 text-center font-black">
+                          {item.qty}
+                        </span>
+
+                        <button
+                          onClick={() => cambiarQty(item.id, 1)}
+                          className="h-10 w-10 rounded-xl bg-white text-lg font-black shadow-sm transition hover:bg-gray-200"
+                          aria-label={`Sumar ${item.nombre}`}
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <p className="text-lg font-black text-orange-600">
+                        {fmt(item.precio * item.qty)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+
+          <aside className="h-fit rounded-3xl bg-white p-5 shadow-lg">
+            <h2 className="text-xl font-black">
+              Resumen
+            </h2>
+
+            <div className="mt-5">
+              <p className="mb-3 text-sm font-bold text-gray-700">
+                Método de pago
+              </p>
+
+              <div className="grid grid-cols-2 gap-2">
+                {METODOS_PAGO.map((metodo) => (
+                  <button
+                    key={metodo}
+                    onClick={() => setMetodoPago(metodo)}
+                    className={`rounded-2xl border px-3 py-3 text-sm font-bold transition ${
+                      metodoPago === metodo
+                        ? "border-orange-500 bg-orange-50 text-orange-700"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {metodo}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3 border-t border-gray-100 pt-5">
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Productos</span>
+                <span>{totalItems}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-xl font-black">
+                <span>Total</span>
+                <span className="text-orange-600">{fmt(subtotal)}</span>
+              </div>
+            </div>
+
+            {error && (
+              <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+                {error}
+              </p>
+            )}
+
+            <button
+              onClick={enviarPedido}
+              disabled={loading}
+              className="mt-6 w-full rounded-2xl bg-orange-600 py-4 text-lg font-black text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              {loading ? "Enviando..." : "Enviar pedido"}
+            </button>
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }

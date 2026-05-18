@@ -1,39 +1,52 @@
-import { MENU } from "../data/menu";
+import { useMemo, useState } from "react";
 
-import { fmt } from "../utils/format";
+import { useNavigate } from "react-router-dom";
+
+import { MENU } from "../data/menu";
 
 import { useCart } from "../context/CartContext";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { fmt } from "../utils/format";
 
 export default function Menu() {
+  const navigate = useNavigate();
 
   const {
     agregar,
+    cambiarQty,
+    carrito,
     totalItems,
     subtotal,
   } = useCart();
 
-  const navigate =
-    useNavigate();
+  const mesa = localStorage.getItem("mesa") || "1";
 
-  const mesa =
-    localStorage.getItem("mesa") ||
-    "1";
+  const categorias = useMemo(
+    () => ["Todos", ...new Set(MENU.map((item) => item.categoria))],
+    []
+  );
 
-  // =========================
-  // AGRUPAR CATEGORIAS
-  // =========================
+  const [categoriaActiva, setCategoriaActiva] = useState("Todos");
+  const [busqueda, setBusqueda] = useState("");
 
-  const categorias =
-    [...new Set(
-      MENU.map(
-        (item) =>
-          item.categoria
-      )
-    )];
+  const productosFiltrados = useMemo(() => {
+    const termino = busqueda.trim().toLowerCase();
+
+    return MENU.filter((item) => {
+      const coincideCategoria =
+        categoriaActiva === "Todos" || item.categoria === categoriaActiva;
+
+      const coincideBusqueda =
+        termino === "" ||
+        item.nombre.toLowerCase().includes(termino) ||
+        item.descripcion.toLowerCase().includes(termino);
+
+      return coincideCategoria && coincideBusqueda;
+    });
+  }, [busqueda, categoriaActiva]);
+
+  const cantidadEnCarrito = (id) =>
+    carrito.find((item) => item.id === id)?.qty || 0;
 
   const imagenMenuClass = (item) => {
     const base =
@@ -47,155 +60,182 @@ export default function Menu() {
   };
 
   return (
-
-    <div className="min-h-screen bg-gray-100">
-
-      {/* HEADER */}
-
-      <div className="bg-black text-white p-5 shadow-lg sticky top-0 z-50">
-
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-
+    <div className="min-h-screen bg-stone-100 text-gray-900">
+      <header className="sticky top-0 z-50 border-b border-black/10 bg-zinc-950 text-white shadow-lg">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-
-            <h1 className="text-3xl font-bold text-orange-500">
-              🌭 Don Perrito
-            </h1>
-
-            <p className="text-gray-300 text-sm">
-              Fast Food Premium
-            </p>
-
-            <p className="text-orange-300 text-sm mt-1">
+            <p className="text-sm font-semibold uppercase tracking-wide text-orange-300">
               Mesa #{mesa}
             </p>
 
+            <h1 className="text-3xl font-black text-orange-500">
+              Don Perrito
+            </h1>
+
+            <p className="text-sm text-gray-300">
+              Hamburguesas, perros y antojos al momento
+            </p>
           </div>
 
-          {/* ADMIN */}
+          <div className="flex items-center gap-3">
+            {totalItems > 0 && (
+              <button
+                onClick={() => navigate("/cart")}
+                className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600"
+              >
+                Pedido ({totalItems}) - {fmt(subtotal)}
+              </button>
+            )}
 
-          <button
-            onClick={() =>
-              window.open(
-                "/admin",
-                "_blank"
-              )
-            }
-            className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-xl font-medium transition"
-          >
-            ⚙️ Admin
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* CONTENIDO */}
-
-      <div className="max-w-6xl mx-auto p-4 pb-32">
-
-        {categorias.map(
-          (categoria) => (
-
-            <div
-              key={categoria}
-              className="mb-10"
+            <button
+              onClick={() => window.open("/admin", "_blank")}
+              className="rounded-2xl border border-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
+              Admin
+            </button>
+          </div>
+        </div>
+      </header>
 
-              {/* TITULO CATEGORIA */}
+      <main className="mx-auto max-w-6xl px-4 pb-32 pt-6">
+        <section className="mb-6 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <h2 className="text-2xl font-black sm:text-3xl">
+              Menú
+            </h2>
 
-              <h2 className="text-3xl font-bold mb-6 text-gray-800">
-                {categoria}
-              </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Elige tus productos y revisa tu pedido antes de enviarlo.
+            </p>
+          </div>
 
-              {/* GRID */}
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-gray-700">
+              Buscar producto
+            </span>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Hamburguesa, perro, bebida..."
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100 lg:w-80"
+            />
+          </label>
+        </section>
 
-                {MENU.filter(
-                  (item) =>
-                    item.categoria ===
-                    categoria
-                ).map(
-                  (item) => (
+        <nav className="mb-7 flex gap-2 overflow-x-auto pb-2">
+          {categorias.map((categoria) => (
+            <button
+              key={categoria}
+              onClick={() => setCategoriaActiva(categoria)}
+              className={`shrink-0 rounded-full px-5 py-3 text-sm font-bold transition ${
+                categoriaActiva === categoria
+                  ? "bg-zinc-950 text-white shadow-lg"
+                  : "bg-white text-gray-700 shadow-sm hover:bg-orange-50 hover:text-orange-700"
+              }`}
+            >
+              {categoria}
+            </button>
+          ))}
+        </nav>
 
-                    <div
-                      key={item.id}
-                      className="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300"
-                    >
+        {productosFiltrados.length === 0 ? (
+          <div className="rounded-3xl bg-white p-10 text-center shadow">
+            <h3 className="text-2xl font-black">
+              No encontramos productos
+            </h3>
 
-                      {/* IMAGEN */}
+            <p className="mt-2 text-gray-500">
+              Prueba con otra búsqueda o cambia de categoría.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {productosFiltrados.map((item) => {
+              const qty = cantidadEnCarrito(item.id);
 
-                      <div className="h-56 w-full bg-orange-50 overflow-hidden flex items-center justify-center">
-                        <img
-                          src={item.imagen}
-                          alt={item.nombre}
-                          className={imagenMenuClass(item)}
-                        />
-                      </div>
+              return (
+                <article
+                  key={item.id}
+                  className="group overflow-hidden rounded-3xl bg-white shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
+                >
+                  <div className="flex h-56 w-full items-center justify-center overflow-hidden bg-orange-50">
+                    <img
+                      src={item.imagen}
+                      alt={item.nombre}
+                      className={imagenMenuClass(item)}
+                      loading="lazy"
+                    />
+                  </div>
 
-                      {/* INFO */}
-
-                      <div className="p-5">
-
-                        <h3 className="text-2xl font-bold text-gray-800">
-                          {item.nombre}
-                        </h3>
-
-                        <p className="text-gray-500 mt-2 min-h-[48px]">
-                          {item.descripcion}
+                  <div className="p-5">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-orange-600">
+                          {item.categoria}
                         </p>
 
-                        <div className="flex items-center justify-between mt-5">
-
-                          <p className="text-2xl font-bold text-orange-600">
-                            {fmt(item.precio)}
-                          </p>
-
-                          <button
-                            onClick={() =>
-                              agregar(item)
-                            }
-                            className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-semibold transition"
-                          >
-                            Agregar
-                          </button>
-
-                        </div>
-
+                        <h3 className="mt-1 text-xl font-black text-gray-900">
+                          {item.nombre}
+                        </h3>
                       </div>
 
+                      <p className="shrink-0 text-lg font-black text-orange-600">
+                        {fmt(item.precio)}
+                      </p>
                     </div>
 
-                  )
-                )}
+                    <p className="min-h-10 text-sm leading-6 text-gray-500">
+                      {item.descripcion}
+                    </p>
 
-              </div>
+                    {qty > 0 ? (
+                      <div className="mt-5 flex items-center justify-between rounded-2xl bg-gray-100 p-2">
+                        <button
+                          onClick={() => cambiarQty(item.id, -1)}
+                          className="h-11 w-11 rounded-xl bg-white text-xl font-black text-gray-900 shadow-sm transition hover:bg-gray-200"
+                          aria-label={`Quitar ${item.nombre}`}
+                        >
+                          -
+                        </button>
 
-            </div>
+                        <span className="font-black">
+                          {qty} en pedido
+                        </span>
 
-          )
+                        <button
+                          onClick={() => agregar(item)}
+                          className="h-11 w-11 rounded-xl bg-orange-500 text-xl font-black text-white shadow-sm transition hover:bg-orange-600"
+                          aria-label={`Agregar ${item.nombre}`}
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => agregar(item)}
+                        className="mt-5 w-full rounded-2xl bg-orange-500 py-3 font-bold text-white transition hover:bg-orange-600"
+                      >
+                        Agregar
+                      </button>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         )}
-
-      </div>
-
-      {/* BOTON CARRITO */}
+      </main>
 
       {totalItems > 0 && (
-
         <button
-          onClick={() =>
-            navigate("/cart")
-          }
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-black hover:bg-gray-900 text-white px-8 py-4 rounded-full shadow-2xl transition text-lg font-semibold z-50"
+          onClick={() => navigate("/cart")}
+          className="fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl bg-zinc-950 px-6 py-4 text-lg font-black text-white shadow-2xl transition hover:bg-black"
         >
-          🛒 Ver pedido (
-          {totalItems}) ·{" "}
-          {fmt(subtotal)}
+          Ver pedido ({totalItems}) - {fmt(subtotal)}
         </button>
-
       )}
-
     </div>
   );
 }

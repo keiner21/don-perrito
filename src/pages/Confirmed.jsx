@@ -1,382 +1,200 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { socket } from "../services/socket";
 
 import { fmt } from "../utils/format";
 
+const ESTADOS = ["Pendiente", "Preparando", "Listo"];
+
 export default function Confirmed() {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const navigate =
-    useNavigate();
+  const [pedido, setPedido] = useState(() => {
+    if (location.state?.pedido) {
+      return location.state.pedido;
+    }
 
-  // =========================
-  // CARGAR PEDIDO
-  // =========================
-
-  const [pedido,
-    setPedido,
-  ] = useState(() => {
-
-    const guardado =
-      localStorage.getItem(
-        "ultimoPedido"
-      );
-
-    return guardado
-      ? JSON.parse(
-          guardado
-        )
-      : null;
+    const guardado = localStorage.getItem("ultimoPedido");
+    return guardado ? JSON.parse(guardado) : null;
   });
 
-  // =========================
-  // VALIDAR PEDIDO
-  // =========================
+  useEffect(() => {
+    if (!pedido) {
+      return undefined;
+    }
+
+    const onPedidoActualizado = (pedidoActualizado) => {
+      if (pedidoActualizado.id !== pedido.id) {
+        return;
+      }
+
+      setPedido(pedidoActualizado);
+      localStorage.setItem("ultimoPedido", JSON.stringify(pedidoActualizado));
+
+      if (pedidoActualizado.estado === "Listo") {
+        window.setTimeout(() => {
+          localStorage.removeItem("ultimoPedido");
+        }, 300000);
+      }
+    };
+
+    socket.on("pedido-actualizado", onPedidoActualizado);
+
+    return () => {
+      socket.off("pedido-actualizado", onPedidoActualizado);
+    };
+  }, [pedido]);
+
+  const estadoIndex = useMemo(
+    () => (pedido ? ESTADOS.indexOf(pedido.estado) : -1),
+    [pedido]
+  );
+
+  const progreso = `${Math.max(((estadoIndex + 1) / ESTADOS.length) * 100, 0)}%`;
+
+  const mensajeEstado = useMemo(() => {
+    if (!pedido) {
+      return "";
+    }
+
+    switch (pedido.estado) {
+      case "Pendiente":
+        return "Tu pedido fue recibido correctamente.";
+      case "Preparando":
+        return "Estamos preparando tu pedido.";
+      case "Listo":
+        return "Tu pedido está listo para entregar.";
+      default:
+        return "Estamos revisando el estado de tu pedido.";
+    }
+  }, [pedido]);
 
   if (!pedido) {
-
     return (
-
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-
-        <div className="bg-white p-10 rounded-3xl shadow-xl text-center w-full max-w-md">
-
-          <div className="text-7xl mb-5">
+      <div className="flex min-h-screen items-center justify-center bg-stone-100 p-6">
+        <div className="w-full max-w-md rounded-3xl bg-white p-10 text-center shadow-xl">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-orange-100 text-4xl">
             🍔
           </div>
 
-          <h1 className="text-3xl font-bold mb-3">
+          <h1 className="text-3xl font-black">
             No hay pedido activo
           </h1>
 
-          <p className="text-gray-500 mb-6">
-            Tu pedido ya fue entregado o eliminado
+          <p className="mb-6 mt-3 text-gray-500">
+            Cuando envíes un pedido podrás ver su estado aquí.
           </p>
 
           <button
-            onClick={() =>
-              navigate("/")
-            }
-            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-2xl font-semibold transition"
+            onClick={() => navigate("/")}
+            className="w-full rounded-2xl bg-orange-600 py-4 font-bold text-white transition hover:bg-orange-700"
           >
             Volver al menú
           </button>
-
         </div>
-
       </div>
     );
   }
 
-  // =========================
-  // SOCKET TIEMPO REAL
-  // =========================
-
-  useEffect(() => {
-
-    socket.on(
-      "pedido-actualizado",
-      (
-        pedidoActualizado
-      ) => {
-
-        if (
-          pedidoActualizado.id ===
-          pedido.id
-        ) {
-
-          setPedido(
-            pedidoActualizado
-          );
-
-          localStorage.setItem(
-            "ultimoPedido",
-            JSON.stringify(
-              pedidoActualizado
-            )
-          );
-
-          // 🔥 ELIMINAR EN 5 MIN
-          if (
-            pedidoActualizado.estado ===
-            "Listo"
-          ) {
-
-            setTimeout(() => {
-
-              localStorage.removeItem(
-                "ultimoPedido"
-              );
-
-            }, 300000); // 5 minutos
-          }
-        }
-      }
-    );
-
-    return () => {
-
-      socket.off(
-        "pedido-actualizado"
-      );
-    };
-
-  }, [pedido]);
-
-  // =========================
-  // COLOR ESTADO
-  // =========================
-
-  const colorEstado =
-    () => {
-
-      switch (
-        pedido.estado
-      ) {
-
-        case "Pendiente":
-          return "bg-yellow-100 text-yellow-700";
-
-        case "Preparando":
-          return "bg-blue-100 text-blue-700";
-
-        case "Listo":
-          return "bg-green-100 text-green-700";
-
-        default:
-          return "bg-gray-100";
-      }
-    };
-
-  // =========================
-  // MENSAJE ESTADO
-  // =========================
-
-  const mensajeEstado =
-    () => {
-
-      switch (
-        pedido.estado
-      ) {
-
-        case "Pendiente":
-          return "Tu pedido fue recibido correctamente";
-
-        case "Preparando":
-          return "Estamos preparando tu pedido 🍳";
-
-        case "Listo":
-          return "Tu pedido está listo ✅";
-
-        default:
-          return "";
-      }
-    };
-
-  // =========================
-  // PROGRESO
-  // =========================
-
-  const progreso =
-    () => {
-
-      switch (
-        pedido.estado
-      ) {
-
-        case "Pendiente":
-          return "33%";
-
-        case "Preparando":
-          return "66%";
-
-        case "Listo":
-          return "100%";
-
-        default:
-          return "0%";
-      }
-    };
-
   return (
-
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex items-center justify-center p-6">
-
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg">
-
-        {/* HEADER */}
-
+    <div className="flex min-h-screen items-center justify-center bg-stone-100 p-4 sm:p-6">
+      <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
         <div className="text-center">
+          <p className="text-sm font-bold uppercase tracking-wide text-orange-600">
+            Mesa #{pedido.mesa}
+          </p>
 
-          <div className="text-8xl mb-4 animate-bounce">
-            🍔
-          </div>
-
-          <h1 className="text-4xl font-bold mb-2">
-            Pedido #
-            {
-              pedido.numero
-            }
+          <h1 className="mt-1 text-4xl font-black">
+            Pedido #{pedido.numero}
           </h1>
 
-          <p className="text-gray-500">
-            Mesa #
-            {
-              pedido.mesa
-            }
+          <p className="mt-2 text-sm text-gray-500">
+            {new Date(pedido.fecha).toLocaleString("es-CO")}
           </p>
-
-          <p className="text-sm text-gray-400 mt-1">
-            {
-              new Date(
-                pedido.fecha
-              ).toLocaleString()
-            }
-          </p>
-
         </div>
 
-        {/* ESTADO */}
+        <section className="mt-8 rounded-3xl bg-orange-50 p-5 text-center">
+          <span className="inline-flex rounded-full bg-white px-5 py-2 text-sm font-black text-orange-700 shadow-sm">
+            {pedido.estado}
+          </span>
 
-        <div className="mt-8 text-center">
-
-          <div
-            className={`inline-block px-6 py-3 rounded-full font-bold text-sm ${colorEstado()}`}
-          >
-            {
-              pedido.estado
-            }
-          </div>
-
-          <p className="mt-4 text-lg font-medium">
-            {
-              mensajeEstado()
-            }
+          <p className="mt-4 text-lg font-bold text-gray-900">
+            {mensajeEstado}
           </p>
+        </section>
 
-        </div>
-
-        {/* PROGRESO */}
-
-        <div className="mt-8">
-
-          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-
+        <section className="mt-8">
+          <div className="h-4 overflow-hidden rounded-full bg-gray-200">
             <div
-              className="bg-orange-500 h-4 rounded-full transition-all duration-500"
-              style={{
-                width:
-                  progreso(),
-              }}
+              className="h-full rounded-full bg-orange-500 transition-all duration-500"
+              style={{ width: progreso }}
             />
-
           </div>
 
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
-            <span>
-              Pendiente
-            </span>
-
-            <span>
-              Preparando
-            </span>
-
-            <span>
-              Listo
-            </span>
-          </div>
-
-        </div>
-
-        {/* ITEMS */}
-
-        <div className="mt-8 border-t border-b py-5 space-y-4">
-
-          {pedido.items.map(
-            (item) => (
-
-              <div
-                key={
-                  item.id
-                }
-                className="flex justify-between items-center"
+          <div className="mt-3 grid grid-cols-3 text-center text-xs font-bold text-gray-500">
+            {ESTADOS.map((estado, index) => (
+              <span
+                key={estado}
+                className={index <= estadoIndex ? "text-orange-700" : ""}
               >
+                {estado}
+              </span>
+            ))}
+          </div>
+        </section>
 
-                <div>
-
-                  <p className="font-semibold">
-                    {
-                      item.qty
-                    }x{" "}
-                    {
-                      item.nombre
-                    }
-                  </p>
-
-                </div>
-
-                <p className="font-bold text-orange-600">
-                  {fmt(
-                    item.precio *
-                      item.qty
-                  )}
+        <section className="mt-8 space-y-3 border-y border-gray-100 py-5">
+          {pedido.items.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between gap-4"
+            >
+              <div>
+                <p className="font-black">
+                  {item.qty}x {item.nombre}
                 </p>
 
+                <p className="text-sm text-gray-500">
+                  {fmt(item.precio)} c/u
+                </p>
               </div>
-            )
-          )}
 
-        </div>
+              <p className="font-black text-orange-600">
+                {fmt(item.precio * item.qty)}
+              </p>
+            </div>
+          ))}
+        </section>
 
-        {/* TOTAL */}
-
-        <div className="flex justify-between items-center mt-6">
-
-          <span className="text-xl font-bold">
+        <div className="mt-6 flex items-center justify-between">
+          <span className="text-xl font-black">
             Total
           </span>
 
-          <span className="text-3xl font-bold text-orange-600">
-            {fmt(
-              pedido.total
-            )}
+          <span className="text-3xl font-black text-orange-600">
+            {fmt(pedido.total)}
           </span>
-
         </div>
 
-        {/* BOTONES */}
-
-        <div className="grid grid-cols-2 gap-4 mt-8">
-
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
           <button
-            onClick={() =>
-              navigate("/")
-            }
-            className="bg-gray-200 hover:bg-gray-300 py-4 rounded-2xl font-semibold transition"
+            onClick={() => navigate("/")}
+            className="rounded-2xl bg-gray-100 py-4 font-bold transition hover:bg-gray-200"
           >
             Ver menú
           </button>
 
           <button
-            onClick={() =>
-              window.location.reload()
-            }
-            className="bg-black hover:bg-gray-900 text-white py-4 rounded-2xl font-semibold transition"
+            onClick={() => window.location.reload()}
+            className="rounded-2xl bg-zinc-950 py-4 font-bold text-white transition hover:bg-black"
           >
-            Actualizar
+            Actualizar estado
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 }
