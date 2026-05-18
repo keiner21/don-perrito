@@ -17,6 +17,7 @@ import { fmt } from "../utils/format";
 import ding from "../assets/ding.mp3";
 
 export default function Admin() {
+
   const navigate =
     useNavigate();
 
@@ -24,9 +25,10 @@ export default function Admin() {
     setPedidos,
   ] = useState([]);
 
-  const audioRef = useRef(
-    new Audio(ding)
-  );
+  const audioRef =
+    useRef(
+      new Audio(ding)
+    );
 
   // =========================
   // DASHBOARD
@@ -39,15 +41,37 @@ export default function Admin() {
       0
     );
 
+  const ventasHoy =
+    pedidos
+
+      .filter((p) => {
+
+        const hoy =
+          new Date();
+
+        const fecha =
+          new Date(
+            p.fecha
+          );
+
+        return (
+          fecha.toDateString() ===
+          hoy.toDateString()
+        );
+      })
+
+      .reduce(
+        (acc, p) =>
+          acc + p.total,
+        0
+      );
+
   const pedidosPendientes =
     pedidos.filter(
       (p) =>
         p.estado ===
         "Pendiente"
     ).length;
-
-  const pedidosHoy =
-    pedidos.length;
 
   const pedidosListos =
     pedidos.filter(
@@ -56,20 +80,23 @@ export default function Admin() {
         "Listo"
     ).length;
 
+  const pedidosHoy =
+    pedidos.length;
+
   // =========================
   // SOCKETS
   // =========================
 
   useEffect(() => {
+
     cargarPedidos();
 
     socket.on(
       "nuevo-pedido",
       (pedido) => {
-        // 🔔 sonido
+
         audioRef.current.play();
 
-        // realtime
         setPedidos(
           (prev) => [
             pedido,
@@ -84,13 +111,18 @@ export default function Admin() {
       (
         pedidoActualizado
       ) => {
+
         setPedidos(
           (prev) =>
+
             prev.map(
               (p) =>
+
                 p.id ===
                 pedidoActualizado.id
+
                   ? pedidoActualizado
+
                   : p
             )
         );
@@ -98,6 +130,7 @@ export default function Admin() {
     );
 
     return () => {
+
       socket.off(
         "nuevo-pedido"
       );
@@ -106,6 +139,7 @@ export default function Admin() {
         "pedido-actualizado"
       );
     };
+
   }, []);
 
   // =========================
@@ -113,7 +147,9 @@ export default function Admin() {
   // =========================
 
   async function cargarPedidos() {
+
     try {
+
       const response =
         await api.get(
           "/pedidos"
@@ -122,7 +158,9 @@ export default function Admin() {
       setPedidos(
         response.data
       );
+
     } catch (error) {
+
       console.error(
         error
       );
@@ -137,14 +175,18 @@ export default function Admin() {
     id,
     estado
   ) {
+
     try {
+
       await api.put(
         `/pedidos/${id}/estado`,
         {
           estado,
         }
       );
+
     } catch (error) {
+
       console.error(
         error
       );
@@ -152,26 +194,33 @@ export default function Admin() {
   }
 
   // =========================
-  // COLORES ESTADO
+  // COLORES
   // =========================
 
   const colorEstado = (
     estado
   ) => {
+
     switch (estado) {
+
       case "Pendiente":
-        return "bg-yellow-100 text-yellow-700";
+
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
 
       case "Preparando":
-        return "bg-blue-100 text-blue-700";
+
+        return "bg-blue-100 text-blue-700 border-blue-300";
 
       case "Listo":
-        return "bg-green-100 text-green-700";
+
+        return "bg-green-100 text-green-700 border-green-300";
 
       case "Entregado":
-        return "bg-gray-200 text-gray-700";
+
+        return "bg-gray-200 text-gray-700 border-gray-300";
 
       default:
+
         return "bg-gray-100";
     }
   };
@@ -181,6 +230,7 @@ export default function Admin() {
   // =========================
 
   function logout() {
+
     localStorage.removeItem(
       "token"
     );
@@ -189,139 +239,186 @@ export default function Admin() {
   }
 
   return (
+
     <div className="min-h-screen bg-gray-100 p-6">
+
       <div className="max-w-7xl mx-auto">
+
         {/* HEADER */}
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-10">
+
           <div>
-            <h1 className="text-4xl font-bold text-orange-600">
-              🍔 Panel Admin
+
+            <h1 className="text-5xl font-black text-orange-600">
+              🍔 Don Perrito
             </h1>
 
-            <p className="text-gray-500 mt-1">
-              Gestión en tiempo real
+            <p className="text-gray-500 mt-2 text-lg">
+              Dashboard en tiempo real
             </p>
+
           </div>
 
           <div className="flex gap-3">
-            <div className="bg-green-100 text-green-700 px-5 py-3 rounded-2xl font-medium">
-              🟢 Sistema Online
+
+            <div className="bg-green-100 text-green-700 px-5 py-3 rounded-2xl font-semibold shadow">
+              🟢 Online
             </div>
 
             <button
               onClick={
                 logout
               }
-              className="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-2xl font-medium transition"
+              className="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-2xl font-semibold transition shadow-lg"
             >
               Cerrar sesión
             </button>
+
           </div>
+
         </div>
 
         {/* DASHBOARD */}
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-5 gap-5 mb-10">
+
+          {/* VENTAS HOY */}
+
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-6 text-white shadow-2xl">
+
+            <p className="opacity-80 text-sm">
+              Ventas Hoy
+            </p>
+
+            <h2 className="text-4xl font-black mt-3">
+              {fmt(
+                ventasHoy
+              )}
+            </h2>
+
+          </div>
+
           {/* VENTAS */}
 
-          <div className="bg-white rounded-3xl p-6 shadow-lg">
-            <p className="text-gray-500 text-sm">
+          <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-6 text-white shadow-2xl">
+
+            <p className="opacity-80 text-sm">
               Ventas Totales
             </p>
 
-            <h2 className="text-3xl font-bold text-green-600 mt-3">
+            <h2 className="text-4xl font-black mt-3">
               {fmt(
                 ventasTotales
               )}
             </h2>
+
           </div>
 
           {/* PEDIDOS */}
 
-          <div className="bg-white rounded-3xl p-6 shadow-lg">
+          <div className="bg-white rounded-3xl p-6 shadow-xl">
+
             <p className="text-gray-500 text-sm">
               Pedidos
             </p>
 
-            <h2 className="text-3xl font-bold text-orange-600 mt-3">
-              {pedidosHoy}
+            <h2 className="text-4xl font-black mt-3">
+              {
+                pedidosHoy
+              }
             </h2>
+
           </div>
 
           {/* PENDIENTES */}
 
-          <div className="bg-white rounded-3xl p-6 shadow-lg">
+          <div className="bg-white rounded-3xl p-6 shadow-xl">
+
             <p className="text-gray-500 text-sm">
               Pendientes
             </p>
 
-            <h2 className="text-3xl font-bold text-yellow-500 mt-3">
+            <h2 className="text-4xl font-black text-yellow-500 mt-3">
               {
                 pedidosPendientes
               }
             </h2>
+
           </div>
 
           {/* LISTOS */}
 
-          <div className="bg-white rounded-3xl p-6 shadow-lg">
+          <div className="bg-white rounded-3xl p-6 shadow-xl">
+
             <p className="text-gray-500 text-sm">
               Listos
             </p>
 
-            <h2 className="text-3xl font-bold text-blue-600 mt-3">
+            <h2 className="text-4xl font-black text-blue-600 mt-3">
               {
                 pedidosListos
               }
             </h2>
+
           </div>
+
         </div>
 
         {/* PEDIDOS */}
 
-        {pedidos.length ===
-        0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center shadow-lg">
-            <div className="text-6xl mb-4">
+        {pedidos.length === 0 ? (
+
+          <div className="bg-white rounded-3xl p-14 text-center shadow-xl">
+
+            <div className="text-7xl mb-5">
               🍔
             </div>
 
-            <p className="text-gray-500 text-lg">
+            <p className="text-gray-500 text-xl">
               No hay pedidos
             </p>
+
           </div>
+
         ) : (
+
           <div className="grid gap-6">
+
             {pedidos.map(
               (pedido) => (
+
                 <div
                   key={
                     pedido.id
                   }
-                  className="bg-white rounded-3xl shadow-lg p-6"
+                  className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200"
                 >
-                  {/* HEADER PEDIDO */}
 
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                  {/* TOP */}
+
+                  <div className="bg-black text-white p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
                     <div>
-                      <h2 className="text-2xl font-bold">
+
+                      <h2 className="text-3xl font-black">
                         Pedido #
                         {
                           pedido.numero
                         }
                       </h2>
 
-                      <p className="text-gray-500">
+                      <p className="text-gray-300 mt-1">
                         Mesa #
                         {
                           pedido.mesa
                         }
                       </p>
+
                     </div>
 
                     <div
-                      className={`px-5 py-2 rounded-full text-sm font-medium w-fit ${colorEstado(
+                      className={`px-5 py-3 rounded-2xl border text-sm font-bold w-fit ${colorEstado(
                         pedido.estado
                       )}`}
                     >
@@ -329,90 +426,112 @@ export default function Admin() {
                         pedido.estado
                       }
                     </div>
+
                   </div>
 
-                  {/* ITEMS */}
+                  {/* BODY */}
 
-                  <div className="border-t border-b py-4 space-y-3">
-                    {pedido.items.map(
-                      (
-                        item
-                      ) => (
-                        <div
-                          key={
-                            item.id
-                          }
-                          className="flex justify-between"
-                        >
-                          <span>
-                            {
-                              item.qty
+                  <div className="p-6">
+
+                    {/* ITEMS */}
+
+                    <div className="space-y-4">
+
+                      {pedido.items.map(
+                        (
+                          item
+                        ) => (
+
+                          <div
+                            key={
+                              item.id
                             }
-                            x{" "}
-                            {
-                              item.nombre
-                            }
-                          </span>
+                            className="bg-gray-50 rounded-2xl p-4 flex justify-between items-center"
+                          >
 
-                          <span className="font-medium">
-                            {fmt(
-                              item.precio *
-                                item.qty
-                            )}
-                          </span>
-                        </div>
-                      )
-                    )}
-                  </div>
+                            <div>
 
-                  {/* FOOTER */}
+                              <p className="font-bold text-lg">
+                                {
+                                  item.nombre
+                                }
+                              </p>
 
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mt-6">
+                              <p className="text-gray-500 text-sm">
+                                Cantidad:
+                                {" "}
+                                {
+                                  item.qty
+                                }
+                              </p>
+
+                            </div>
+
+                            <div className="text-orange-600 font-black text-xl">
+                              {fmt(
+                                item.precio *
+                                  item.qty
+                              )}
+                            </div>
+
+                          </div>
+                        )
+                      )}
+
+                    </div>
+
                     {/* INFO */}
 
-                    <div className="flex flex-col gap-2">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-8">
+
+                      <div className="bg-gray-50 rounded-2xl p-4">
+
                         <p className="text-gray-500 text-sm">
                           Método pago
                         </p>
 
-                        <p className="font-semibold">
+                        <p className="font-bold text-lg mt-1">
                           {
                             pedido.metodo
                           }
                         </p>
+
                       </div>
 
-                      <div>
+                      <div className="bg-gray-50 rounded-2xl p-4">
+
                         <p className="text-gray-500 text-sm">
                           Fecha
                         </p>
 
-                        <p className="font-semibold">
+                        <p className="font-bold mt-1">
                           {new Date(
                             pedido.fecha
                           ).toLocaleString()}
                         </p>
+
                       </div>
-                    </div>
 
-                    {/* TOTAL */}
+                      <div className="bg-orange-50 rounded-2xl p-4">
 
-                    <div>
-                      <p className="text-gray-500 text-sm">
-                        Total
-                      </p>
+                        <p className="text-orange-500 text-sm">
+                          Total
+                        </p>
 
-                      <p className="text-3xl font-bold text-orange-600">
-                        {fmt(
-                          pedido.total
-                        )}
-                      </p>
+                        <p className="text-3xl font-black text-orange-600 mt-1">
+                          {fmt(
+                            pedido.total
+                          )}
+                        </p>
+
+                      </div>
+
                     </div>
 
                     {/* BOTONES */}
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3 mt-8">
+
                       <button
                         onClick={() =>
                           cambiarEstado(
@@ -420,7 +539,7 @@ export default function Admin() {
                             "Pendiente"
                           )
                         }
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl transition"
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-3 rounded-2xl font-semibold transition shadow"
                       >
                         Pendiente
                       </button>
@@ -432,7 +551,7 @@ export default function Admin() {
                             "Preparando"
                           )
                         }
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl transition"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-2xl font-semibold transition shadow"
                       >
                         Preparando
                       </button>
@@ -444,7 +563,7 @@ export default function Admin() {
                             "Listo"
                           )
                         }
-                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl transition"
+                        className="bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-2xl font-semibold transition shadow"
                       >
                         Listo
                       </button>
@@ -456,18 +575,25 @@ export default function Admin() {
                             "Entregado"
                           )
                         }
-                        className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-xl transition"
+                        className="bg-gray-800 hover:bg-black text-white px-5 py-3 rounded-2xl font-semibold transition shadow"
                       >
                         Entregado
                       </button>
+
                     </div>
+
                   </div>
+
                 </div>
               )
             )}
+
           </div>
+
         )}
+
       </div>
+
     </div>
   );
 }
