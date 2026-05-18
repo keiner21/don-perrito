@@ -201,19 +201,12 @@ export default function Confirmed() {
           </span>
         </div>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <div className="mt-8">
           <button
             onClick={() => navigate("/")}
-            className="rounded-2xl bg-gray-100 py-4 font-bold transition hover:bg-gray-200"
+            className="w-full rounded-2xl bg-gray-100 py-4 font-bold transition hover:bg-gray-200"
           >
             Ver menú
-          </button>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="rounded-2xl bg-zinc-950 py-4 font-bold text-white transition hover:bg-black"
-          >
-            Actualizar estado
           </button>
         </div>
       </div>

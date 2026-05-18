@@ -42,12 +42,14 @@ export default function Admin() {
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sonidoActivo, setSonidoActivo] = useState(
-    () => localStorage.getItem("adminSound") === "on"
-  );
+  const [sonidoActivo, setSonidoActivo] = useState(false);
 
   const audioRef = useRef(new Audio(ding));
+  const audioContextRef = useRef(null);
   const sonidoActivoRef = useRef(sonidoActivo);
+  const reproducirSonidoPedidoRef = useRef(null);
+
+  reproducirSonidoPedidoRef.current = reproducirSonidoPedido;
 
   useEffect(() => {
     sonidoActivoRef.current = sonidoActivo;
@@ -64,12 +66,7 @@ export default function Admin() {
 
     socket.on("nuevo-pedido", (pedido) => {
       if (sonidoActivoRef.current) {
-        audioRef.current.currentTime = 0;
-
-        audioRef.current.play().catch(() => {
-          setSonidoActivo(false);
-          setError("El navegador bloqueó el sonido. Pulsa Activar sonido.");
-        });
+        reproducirSonidoPedidoRef.current?.();
       }
 
       setPedidos((prev) => [pedido, ...prev]);
@@ -110,14 +107,74 @@ export default function Admin() {
 
   async function activarSonido() {
     try {
-      audioRef.current.currentTime = 0;
-      audioRef.current.volume = 0.9;
-      await audioRef.current.play();
+      await desbloquearAudio();
+      await reproducirSonidoPedido();
       setSonidoActivo(true);
       setError("");
     } catch {
       setError("No pudimos activar el sonido. Revisa permisos del navegador.");
     }
+  }
+
+  async function desbloquearAudio() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    if (AudioContext && !audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
+
+    if (audioContextRef.current?.state === "suspended") {
+      await audioContextRef.current.resume();
+    }
+
+    audioRef.current.muted = true;
+    audioRef.current.currentTime = 0;
+
+    await audioRef.current.play();
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    audioRef.current.muted = false;
+  }
+
+  async function reproducirSonidoPedido() {
+    try {
+      const audio = new Audio(ding);
+      audio.volume = 1;
+      await audio.play();
+    } catch {
+      reproducirBeepRespaldo();
+    }
+  }
+
+  function reproducirBeepRespaldo() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContext) {
+      return;
+    }
+
+    const context = audioContextRef.current || new AudioContext();
+    audioContextRef.current = context;
+
+    if (context.state === "suspended") {
+      context.resume();
+    }
+
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, context.currentTime);
+    oscillator.frequency.setValueAtTime(660, context.currentTime + 0.18);
+
+    gain.gain.setValueAtTime(0.001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.35, context.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.45);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.5);
   }
 
   async function cambiarEstado(id, estado) {
@@ -276,6 +333,15 @@ export default function Admin() {
               }`}
             >
               {sonidoActivo ? "Sonido activo" : "Activar sonido"}
+            </button>
+
+            <button
+              onClick={async () => {
+                await activarSonido();
+              }}
+              className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-orange-50"
+            >
+              Probar sonido
             </button>
 
             <button
