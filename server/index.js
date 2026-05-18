@@ -16,6 +16,14 @@ const {
 
 const prisma = new PrismaClient();
 
+const METODOS_PAGO = [
+  "Efectivo",
+  "Nequi",
+  "Daviplata",
+  "Bancolombia",
+  "Tarjeta",
+];
+
 const app = express();
 
 const server =
@@ -172,6 +180,19 @@ app.post(
         total,
         items,
       } = req.body;
+
+      if (
+        !METODOS_PAGO.includes(
+          metodo
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            error:
+              "Selecciona un método de pago válido",
+          });
+      }
 
       const numero =
         Math.floor(

@@ -10,7 +10,7 @@ import { fmt } from "../utils/format";
 
 import { saveActiveOrder } from "../utils/activeOrder";
 
-const METODOS_PAGO = ["Efectivo", "Nequi", "Daviplata", "Tarjeta"];
+const METODOS_PAGO = ["Efectivo", "Nequi", "Daviplata", "Bancolombia", "Tarjeta"];
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -24,13 +24,18 @@ export default function Cart() {
     limpiarCarrito,
   } = useCart();
 
-  const [metodoPago, setMetodoPago] = useState("Efectivo");
+  const [metodoPago, setMetodoPago] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function enviarPedido() {
     if (carrito.length === 0) {
       setError("Agrega al menos un producto antes de enviar el pedido.");
+      return;
+    }
+
+    if (!METODOS_PAGO.includes(metodoPago)) {
+      setError("Selecciona un método de pago para enviar el pedido.");
       return;
     }
 
@@ -214,6 +219,12 @@ export default function Cart() {
                   </button>
                 ))}
               </div>
+
+              {!metodoPago && (
+                <p className="mt-3 text-sm font-semibold text-orange-700">
+                  Selecciona cómo vas a pagar antes de enviar el pedido.
+                </p>
+              )}
             </div>
 
             <div className="mt-6 space-y-3 border-t border-gray-100 pt-5">
