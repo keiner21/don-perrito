@@ -37,30 +37,34 @@ export default function Confirmed() {
   });
 
   // =========================
-  // VALIDAR
+  // VALIDAR PEDIDO
   // =========================
 
   if (!pedido) {
 
     return (
 
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
 
         <div className="bg-white p-10 rounded-3xl shadow-xl text-center w-full max-w-md">
 
-          <div className="text-6xl mb-4">
+          <div className="text-7xl mb-5">
             🍔
           </div>
 
-          <h1 className="text-2xl font-bold mb-4">
+          <h1 className="text-3xl font-bold mb-3">
             No hay pedido activo
           </h1>
+
+          <p className="text-gray-500 mb-6">
+            Tu pedido ya fue entregado o eliminado
+          </p>
 
           <button
             onClick={() =>
               navigate("/")
             }
-            className="bg-black text-white px-6 py-3 rounded-2xl"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-2xl font-semibold transition"
           >
             Volver al menú
           </button>
@@ -72,7 +76,7 @@ export default function Confirmed() {
   }
 
   // =========================
-  // SOCKET REALTIME
+  // SOCKET TIEMPO REAL
   // =========================
 
   useEffect(() => {
@@ -92,13 +96,27 @@ export default function Confirmed() {
             pedidoActualizado
           );
 
-          // 🔥 ACTUALIZAR STORAGE
           localStorage.setItem(
             "ultimoPedido",
             JSON.stringify(
               pedidoActualizado
             )
           );
+
+          // 🔥 ELIMINAR EN 5 MIN
+          if (
+            pedidoActualizado.estado ===
+            "Listo"
+          ) {
+
+            setTimeout(() => {
+
+              localStorage.removeItem(
+                "ultimoPedido"
+              );
+
+            }, 300000); // 5 minutos
+          }
         }
       }
     );
@@ -113,7 +131,7 @@ export default function Confirmed() {
   }, [pedido]);
 
   // =========================
-  // COLORES
+  // COLOR ESTADO
   // =========================
 
   const colorEstado =
@@ -138,7 +156,7 @@ export default function Confirmed() {
     };
 
   // =========================
-  // MENSAJES
+  // MENSAJE ESTADO
   // =========================
 
   const mensajeEstado =
@@ -149,7 +167,7 @@ export default function Confirmed() {
       ) {
 
         case "Pendiente":
-          return "Tu pedido fue recibido";
+          return "Tu pedido fue recibido correctamente";
 
         case "Preparando":
           return "Estamos preparando tu pedido 🍳";
@@ -162,55 +180,124 @@ export default function Confirmed() {
       }
     };
 
+  // =========================
+  // PROGRESO
+  // =========================
+
+  const progreso =
+    () => {
+
+      switch (
+        pedido.estado
+      ) {
+
+        case "Pendiente":
+          return "33%";
+
+        case "Preparando":
+          return "66%";
+
+        case "Listo":
+          return "100%";
+
+        default:
+          return "0%";
+      }
+    };
+
   return (
 
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex items-center justify-center p-6">
 
-      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg">
 
-        {/* TOP */}
+        {/* HEADER */}
 
         <div className="text-center">
 
-          <div className="text-7xl mb-4">
+          <div className="text-8xl mb-4 animate-bounce">
             🍔
           </div>
 
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-4xl font-bold mb-2">
             Pedido #
             {
               pedido.numero
             }
           </h1>
 
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500">
             Mesa #
             {
               pedido.mesa
             }
           </p>
 
-          {/* ESTADO */}
+          <p className="text-sm text-gray-400 mt-1">
+            {
+              new Date(
+                pedido.fecha
+              ).toLocaleString()
+            }
+          </p>
+
+        </div>
+
+        {/* ESTADO */}
+
+        <div className="mt-8 text-center">
 
           <div
-            className={`inline-block px-5 py-3 rounded-full font-medium text-sm mb-6 ${colorEstado()}`}
+            className={`inline-block px-6 py-3 rounded-full font-bold text-sm ${colorEstado()}`}
           >
             {
               pedido.estado
             }
           </div>
 
-          {/* MENSAJE */}
-
-          <p className="text-lg font-medium mb-8">
-            {mensajeEstado()}
+          <p className="mt-4 text-lg font-medium">
+            {
+              mensajeEstado()
+            }
           </p>
+
+        </div>
+
+        {/* PROGRESO */}
+
+        <div className="mt-8">
+
+          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+
+            <div
+              className="bg-orange-500 h-4 rounded-full transition-all duration-500"
+              style={{
+                width:
+                  progreso(),
+              }}
+            />
+
+          </div>
+
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>
+              Pendiente
+            </span>
+
+            <span>
+              Preparando
+            </span>
+
+            <span>
+              Listo
+            </span>
+          </div>
 
         </div>
 
         {/* ITEMS */}
 
-        <div className="border-t border-b py-5 space-y-3">
+        <div className="mt-8 border-t border-b py-5 space-y-4">
 
           {pedido.items.map(
             (item) => (
@@ -219,25 +306,28 @@ export default function Confirmed() {
                 key={
                   item.id
                 }
-                className="flex justify-between"
+                className="flex justify-between items-center"
               >
 
-                <span>
-                  {
-                    item.qty
-                  }
-                  x{" "}
-                  {
-                    item.nombre
-                  }
-                </span>
+                <div>
 
-                <span>
+                  <p className="font-semibold">
+                    {
+                      item.qty
+                    }x{" "}
+                    {
+                      item.nombre
+                    }
+                  </p>
+
+                </div>
+
+                <p className="font-bold text-orange-600">
                   {fmt(
                     item.precio *
                       item.qty
                   )}
-                </span>
+                </p>
 
               </div>
             )
@@ -247,13 +337,13 @@ export default function Confirmed() {
 
         {/* TOTAL */}
 
-        <div className="flex justify-between mt-6 text-xl font-bold">
+        <div className="flex justify-between items-center mt-6">
 
-          <span>
+          <span className="text-xl font-bold">
             Total
           </span>
 
-          <span className="text-orange-600">
+          <span className="text-3xl font-bold text-orange-600">
             {fmt(
               pedido.total
             )}
@@ -263,7 +353,7 @@ export default function Confirmed() {
 
         {/* BOTONES */}
 
-        <div className="grid grid-cols-2 gap-3 mt-8">
+        <div className="grid grid-cols-2 gap-4 mt-8">
 
           <button
             onClick={() =>
@@ -278,7 +368,7 @@ export default function Confirmed() {
             onClick={() =>
               window.location.reload()
             }
-            className="bg-black text-white py-4 rounded-2xl font-semibold"
+            className="bg-black hover:bg-gray-900 text-white py-4 rounded-2xl font-semibold transition"
           >
             Actualizar
           </button>
