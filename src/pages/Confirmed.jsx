@@ -4,7 +4,6 @@ import {
 } from "react";
 
 import {
-  useLocation,
   useNavigate,
 } from "react-router-dom";
 
@@ -13,51 +12,87 @@ import { socket } from "../services/socket";
 import { fmt } from "../utils/format";
 
 export default function Confirmed() {
+
   const navigate =
     useNavigate();
 
-  const { state } =
-    useLocation();
+  // =========================
+  // CARGAR PEDIDO
+  // =========================
 
-  const [pedido, setPedido] =
-    useState(() => {
-      // primero intenta state
-      if (state?.pedido) {
-        return state.pedido;
-      }
+  const [pedido,
+    setPedido,
+  ] = useState(() => {
 
-      // luego localStorage
-      const guardado =
-        localStorage.getItem(
-          "ultimoPedido"
-        );
+    const guardado =
+      localStorage.getItem(
+        "ultimoPedido"
+      );
 
-      return guardado
-        ? JSON.parse(guardado)
-        : null;
-    });
+    return guardado
+      ? JSON.parse(
+          guardado
+        )
+      : null;
+  });
+
+  // =========================
+  // VALIDAR
+  // =========================
+
+  if (!pedido) {
+
+    return (
+
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+
+        <div className="bg-white p-10 rounded-3xl shadow-xl text-center w-full max-w-md">
+
+          <div className="text-6xl mb-4">
+            🍔
+          </div>
+
+          <h1 className="text-2xl font-bold mb-4">
+            No hay pedido activo
+          </h1>
+
+          <button
+            onClick={() =>
+              navigate("/")
+            }
+            className="bg-black text-white px-6 py-3 rounded-2xl"
+          >
+            Volver al menú
+          </button>
+
+        </div>
+
+      </div>
+    );
+  }
 
   // =========================
   // SOCKET REALTIME
   // =========================
 
   useEffect(() => {
-    if (!pedido) return;
 
     socket.on(
       "pedido-actualizado",
       (
         pedidoActualizado
       ) => {
+
         if (
           pedidoActualizado.id ===
           pedido.id
         ) {
+
           setPedido(
             pedidoActualizado
           );
 
-          // actualizar storage
+          // 🔥 ACTUALIZAR STORAGE
           localStorage.setItem(
             "ultimoPedido",
             JSON.stringify(
@@ -69,50 +104,25 @@ export default function Confirmed() {
     );
 
     return () => {
+
       socket.off(
         "pedido-actualizado"
       );
     };
+
   }, [pedido]);
 
   // =========================
-  // SIN PEDIDO
-  // =========================
-
-  if (!pedido) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-        <div className="bg-white p-10 rounded-3xl shadow-xl text-center w-full max-w-md">
-          <div className="text-6xl mb-4">
-            🍔
-          </div>
-
-          <h1 className="text-2xl font-bold mb-4">
-            No tienes pedidos
-          </h1>
-
-          <button
-            onClick={() =>
-              navigate("/")
-            }
-            className="bg-black text-white px-6 py-3 rounded-2xl"
-          >
-            Ir al menú
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // =========================
-  // COLOR ESTADO
+  // COLORES
   // =========================
 
   const colorEstado =
     () => {
+
       switch (
         pedido.estado
       ) {
+
         case "Pendiente":
           return "bg-yellow-100 text-yellow-700";
 
@@ -128,16 +138,18 @@ export default function Confirmed() {
     };
 
   // =========================
-  // MENSAJE
+  // MENSAJES
   // =========================
 
   const mensajeEstado =
     () => {
+
       switch (
         pedido.estado
       ) {
+
         case "Pendiente":
-          return "Tu pedido fue recibido 🍔";
+          return "Tu pedido fue recibido";
 
         case "Preparando":
           return "Estamos preparando tu pedido 🍳";
@@ -151,7 +163,9 @@ export default function Confirmed() {
     };
 
   return (
+
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-lg">
 
         {/* TOP */}
@@ -164,11 +178,16 @@ export default function Confirmed() {
 
           <h1 className="text-3xl font-bold mb-2">
             Pedido #
-            {pedido.numero}
+            {
+              pedido.numero
+            }
           </h1>
 
           <p className="text-gray-500 mb-6">
-            Mesa #{pedido.mesa}
+            Mesa #
+            {
+              pedido.mesa
+            }
           </p>
 
           {/* ESTADO */}
@@ -176,8 +195,12 @@ export default function Confirmed() {
           <div
             className={`inline-block px-5 py-3 rounded-full font-medium text-sm mb-6 ${colorEstado()}`}
           >
-            {pedido.estado}
+            {
+              pedido.estado
+            }
           </div>
+
+          {/* MENSAJE */}
 
           <p className="text-lg font-medium mb-8">
             {mensajeEstado()}
@@ -188,15 +211,25 @@ export default function Confirmed() {
         {/* ITEMS */}
 
         <div className="border-t border-b py-5 space-y-3">
+
           {pedido.items.map(
             (item) => (
+
               <div
-                key={item.id}
+                key={
+                  item.id
+                }
                 className="flex justify-between"
               >
+
                 <span>
-                  {item.qty}x{" "}
-                  {item.nombre}
+                  {
+                    item.qty
+                  }
+                  x{" "}
+                  {
+                    item.nombre
+                  }
                 </span>
 
                 <span>
@@ -205,47 +238,55 @@ export default function Confirmed() {
                       item.qty
                   )}
                 </span>
+
               </div>
             )
           )}
+
         </div>
 
         {/* TOTAL */}
 
         <div className="flex justify-between mt-6 text-xl font-bold">
-          <span>Total</span>
+
+          <span>
+            Total
+          </span>
 
           <span className="text-orange-600">
             {fmt(
               pedido.total
             )}
           </span>
+
         </div>
 
         {/* BOTONES */}
 
-        <div className="grid grid-cols-2 gap-4 mt-8">
+        <div className="grid grid-cols-2 gap-3 mt-8">
 
           <button
             onClick={() =>
               navigate("/")
             }
-            className="bg-gray-200 py-4 rounded-2xl font-medium"
+            className="bg-gray-200 hover:bg-gray-300 py-4 rounded-2xl font-semibold transition"
           >
-            Volver al menú
+            Ver menú
           </button>
 
           <button
             onClick={() =>
               window.location.reload()
             }
-            className="bg-black text-white py-4 rounded-2xl font-medium"
+            className="bg-black text-white py-4 rounded-2xl font-semibold"
           >
             Actualizar
           </button>
 
         </div>
+
       </div>
+
     </div>
   );
 }
