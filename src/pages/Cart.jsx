@@ -10,7 +10,22 @@ import { fmt } from "../utils/format";
 
 import { saveActiveOrder } from "../utils/activeOrder";
 
-const METODOS_PAGO = ["Efectivo", "Nequi", "Daviplata", "Bancolombia", "Tarjeta"];
+const METODOS_PAGO = [
+  "Efectivo",
+  "Nequi",
+  "Daviplata",
+  "Bancolombia",
+  "PSE",
+  "Tarjeta",
+];
+
+const METODOS_ONLINE = [
+  "Nequi",
+  "Daviplata",
+  "Bancolombia",
+  "PSE",
+  "Tarjeta",
+];
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -52,9 +67,24 @@ export default function Cart() {
 
       const response = await api.post("/pedidos", pedido);
 
-      const pedidoGuardado = saveActiveOrder(response.data);
+      const pedidoCreado =
+        response.data.pedido ||
+        response.data;
 
       limpiarCarrito();
+
+      if (
+        METODOS_ONLINE.includes(
+          metodoPago
+        ) &&
+        response.data.checkoutUrl
+      ) {
+        window.location.href =
+          response.data.checkoutUrl;
+        return;
+      }
+
+      const pedidoGuardado = saveActiveOrder(pedidoCreado);
 
       navigate("/confirmed", {
         state: {
@@ -250,7 +280,13 @@ export default function Cart() {
               disabled={loading}
               className="mt-6 w-full rounded-2xl bg-orange-600 py-4 text-lg font-black text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
-              {loading ? "Enviando..." : "Enviar pedido"}
+              {loading
+                ? "Procesando..."
+                : METODOS_ONLINE.includes(
+                    metodoPago
+                  )
+                  ? "Pagar ahora"
+                  : "Enviar pedido"}
             </button>
           </aside>
         </div>

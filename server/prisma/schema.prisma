@@ -19,6 +19,10 @@ model Pedido {
   metodo    String
   total     Float
   estado    String
+  estadoPago String @default("NO_APLICA")
+  wompiReference String? @unique
+  wompiTransactionId String?
+  wompiPaymentUrl String?
   fecha     String
 
   items PedidoItem[]
