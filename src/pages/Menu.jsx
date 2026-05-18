@@ -28,6 +28,7 @@ export default function Menu() {
 
   const [categoriaActiva, setCategoriaActiva] = useState("Todos");
   const [busqueda, setBusqueda] = useState("");
+  const [pedidoActivo] = useState(() => Boolean(localStorage.getItem("ultimoPedido")));
 
   const productosFiltrados = useMemo(() => {
     const termino = busqueda.trim().toLowerCase();
@@ -77,7 +78,16 @@ export default function Menu() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {pedidoActivo && (
+              <button
+                onClick={() => navigate("/confirmed")}
+                className="rounded-2xl border border-orange-400/70 px-4 py-3 text-sm font-bold text-orange-200 transition hover:bg-orange-500/10"
+              >
+                Ver pedido activo
+              </button>
+            )}
+
             {totalItems > 0 && (
               <button
                 onClick={() => navigate("/cart")}
@@ -234,6 +244,15 @@ export default function Menu() {
           className="fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl bg-zinc-950 px-6 py-4 text-lg font-black text-white shadow-2xl transition hover:bg-black"
         >
           Ver pedido ({totalItems}) - {fmt(subtotal)}
+        </button>
+      )}
+
+      {totalItems === 0 && pedidoActivo && (
+        <button
+          onClick={() => navigate("/confirmed")}
+          className="fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl bg-zinc-950 px-6 py-4 text-lg font-black text-white shadow-2xl transition hover:bg-black"
+        >
+          Volver a mi pedido
         </button>
       )}
     </div>

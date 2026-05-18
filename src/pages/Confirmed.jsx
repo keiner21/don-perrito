@@ -6,6 +6,8 @@ import { socket } from "../services/socket";
 
 import { fmt } from "../utils/format";
 
+import seguimientoPedido from "../assets/productos/hamburguesa-clasica.jpg";
+
 const ESTADOS = ["Pendiente", "Preparando", "Listo"];
 
 export default function Confirmed() {
@@ -116,14 +118,34 @@ export default function Confirmed() {
           </p>
         </div>
 
-        <section className="mt-8 rounded-3xl bg-orange-50 p-5 text-center">
-          <span className="inline-flex rounded-full bg-white px-5 py-2 text-sm font-black text-orange-700 shadow-sm">
-            {pedido.estado}
-          </span>
+        <section className="mt-8 overflow-hidden rounded-3xl bg-orange-50">
+          <div className="grid items-center gap-5 p-5 sm:grid-cols-[11rem_1fr]">
+            <div className="relative mx-auto h-40 w-40">
+              <div className="absolute inset-0 animate-ping rounded-full bg-orange-200 opacity-40" />
 
-          <p className="mt-4 text-lg font-bold text-gray-900">
-            {mensajeEstado}
-          </p>
+              <img
+                src={seguimientoPedido}
+                alt="Pedido en preparación"
+                className="relative h-full w-full rounded-full object-cover shadow-xl ring-8 ring-white"
+              />
+            </div>
+
+            <div className="text-center sm:text-left">
+              <span className="inline-flex rounded-full bg-white px-5 py-2 text-sm font-black text-orange-700 shadow-sm">
+                {pedido.estado}
+              </span>
+
+              <p className="mt-4 text-lg font-bold text-gray-900">
+                {mensajeEstado}
+              </p>
+
+              <div className="mt-5 flex items-center justify-center gap-2 sm:justify-start">
+                <span className="h-3 w-3 animate-bounce rounded-full bg-orange-500" />
+                <span className="h-3 w-3 animate-bounce rounded-full bg-orange-500 [animation-delay:150ms]" />
+                <span className="h-3 w-3 animate-bounce rounded-full bg-orange-500 [animation-delay:300ms]" />
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="mt-8">

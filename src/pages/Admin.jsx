@@ -42,14 +42,36 @@ export default function Admin() {
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sonidoActivo, setSonidoActivo] = useState(
+    () => localStorage.getItem("adminSound") === "on"
+  );
 
   const audioRef = useRef(new Audio(ding));
+  const sonidoActivoRef = useRef(sonidoActivo);
+
+  useEffect(() => {
+    sonidoActivoRef.current = sonidoActivo;
+    localStorage.setItem("adminSound", sonidoActivo ? "on" : "off");
+  }, [sonidoActivo]);
+
+  useEffect(() => {
+    audioRef.current.preload = "auto";
+    audioRef.current.volume = 0.9;
+  }, []);
 
   useEffect(() => {
     cargarPedidos();
 
     socket.on("nuevo-pedido", (pedido) => {
-      audioRef.current.play().catch(() => {});
+      if (sonidoActivoRef.current) {
+        audioRef.current.currentTime = 0;
+
+        audioRef.current.play().catch(() => {
+          setSonidoActivo(false);
+          setError("El navegador bloqueó el sonido. Pulsa Activar sonido.");
+        });
+      }
+
       setPedidos((prev) => [pedido, ...prev]);
     });
 
@@ -84,6 +106,18 @@ export default function Admin() {
   function logout() {
     localStorage.removeItem("token");
     navigate("/login");
+  }
+
+  async function activarSonido() {
+    try {
+      audioRef.current.currentTime = 0;
+      audioRef.current.volume = 0.9;
+      await audioRef.current.play();
+      setSonidoActivo(true);
+      setError("");
+    } catch {
+      setError("No pudimos activar el sonido. Revisa permisos del navegador.");
+    }
   }
 
   async function cambiarEstado(id, estado) {
@@ -231,6 +265,19 @@ export default function Admin() {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() =>
+                sonidoActivo ? setSonidoActivo(false) : activarSonido()
+              }
+              className={`rounded-2xl px-4 py-3 text-sm font-bold transition ${
+                sonidoActivo
+                  ? "bg-orange-600 text-white hover:bg-orange-700"
+                  : "bg-white text-gray-800 shadow-sm hover:bg-orange-50"
+              }`}
+            >
+              {sonidoActivo ? "Sonido activo" : "Activar sonido"}
+            </button>
+
             <button
               onClick={cargarPedidos}
               className="rounded-2xl bg-white px-4 py-3 text-sm font-bold shadow-sm transition hover:bg-gray-50"
