@@ -8,6 +8,8 @@ import { api } from "../services/api";
 
 import { fmt } from "../utils/format";
 
+import { saveActiveOrder } from "../utils/activeOrder";
+
 const METODOS_PAGO = ["Efectivo", "Nequi", "Daviplata", "Tarjeta"];
 
 export default function Cart() {
@@ -45,13 +47,13 @@ export default function Cart() {
 
       const response = await api.post("/pedidos", pedido);
 
-      localStorage.setItem("ultimoPedido", JSON.stringify(response.data));
+      const pedidoGuardado = saveActiveOrder(response.data);
 
       limpiarCarrito();
 
       navigate("/confirmed", {
         state: {
-          pedido: response.data,
+          pedido: pedidoGuardado,
         },
       });
     } catch (err) {

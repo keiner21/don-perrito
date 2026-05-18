@@ -6,7 +6,14 @@ import { socket } from "../services/socket";
 
 import { fmt } from "../utils/format";
 
-import seguimientoPedido from "../assets/productos/hamburguesa-clasica.jpg";
+import {
+  clearActiveOrder,
+  getActiveOrder,
+  getActiveOrderTimeLeft,
+  saveActiveOrder,
+} from "../utils/activeOrder";
+
+import seguimientoPedido from "../assets/logo-don-perrito.png";
 
 const ESTADOS = ["Pendiente", "Preparando", "Listo"];
 
@@ -16,11 +23,10 @@ export default function Confirmed() {
 
   const [pedido, setPedido] = useState(() => {
     if (location.state?.pedido) {
-      return location.state.pedido;
+      return saveActiveOrder(location.state.pedido);
     }
 
-    const guardado = localStorage.getItem("ultimoPedido");
-    return guardado ? JSON.parse(guardado) : null;
+    return getActiveOrder();
   });
 
   useEffect(() => {
@@ -33,14 +39,7 @@ export default function Confirmed() {
         return;
       }
 
-      setPedido(pedidoActualizado);
-      localStorage.setItem("ultimoPedido", JSON.stringify(pedidoActualizado));
-
-      if (pedidoActualizado.estado === "Listo") {
-        window.setTimeout(() => {
-          localStorage.removeItem("ultimoPedido");
-        }, 300000);
-      }
+      setPedido(saveActiveOrder(pedidoActualizado));
     };
 
     socket.on("pedido-actualizado", onPedidoActualizado);
@@ -48,6 +47,25 @@ export default function Confirmed() {
     return () => {
       socket.off("pedido-actualizado", onPedidoActualizado);
     };
+  }, [pedido]);
+
+  useEffect(() => {
+    if (!pedido) {
+      return undefined;
+    }
+
+    const timeLeft = getActiveOrderTimeLeft(pedido);
+
+    if (timeLeft === null) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => {
+      clearActiveOrder();
+      setPedido(null);
+    }, timeLeft);
+
+    return () => window.clearTimeout(timeout);
   }, [pedido]);
 
   const estadoIndex = useMemo(
@@ -125,7 +143,7 @@ export default function Confirmed() {
 
               <img
                 src={seguimientoPedido}
-                alt="Pedido en preparación"
+                alt="Logo Don Perrito"
                 className="relative h-full w-full rounded-full object-cover shadow-xl ring-8 ring-white"
               />
             </div>

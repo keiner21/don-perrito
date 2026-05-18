@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -7,6 +7,15 @@ import { MENU } from "../data/menu";
 import { useCart } from "../context/CartContext";
 
 import { fmt } from "../utils/format";
+
+import { socket } from "../services/socket";
+
+import {
+  clearActiveOrder,
+  getActiveOrder,
+  getActiveOrderTimeLeft,
+  saveActiveOrder,
+} from "../utils/activeOrder";
 
 export default function Menu() {
   const navigate = useNavigate();
@@ -28,7 +37,46 @@ export default function Menu() {
 
   const [categoriaActiva, setCategoriaActiva] = useState("Todos");
   const [busqueda, setBusqueda] = useState("");
-  const [pedidoActivo] = useState(() => Boolean(localStorage.getItem("ultimoPedido")));
+  const [pedidoActivo, setPedidoActivo] = useState(() => getActiveOrder());
+
+  useEffect(() => {
+    if (!pedidoActivo) {
+      return undefined;
+    }
+
+    const onPedidoActualizado = (pedidoActualizado) => {
+      if (pedidoActualizado.id !== pedidoActivo.id) {
+        return;
+      }
+
+      setPedidoActivo(saveActiveOrder(pedidoActualizado));
+    };
+
+    socket.on("pedido-actualizado", onPedidoActualizado);
+
+    return () => {
+      socket.off("pedido-actualizado", onPedidoActualizado);
+    };
+  }, [pedidoActivo]);
+
+  useEffect(() => {
+    if (!pedidoActivo) {
+      return undefined;
+    }
+
+    const timeLeft = getActiveOrderTimeLeft(pedidoActivo);
+
+    if (timeLeft === null) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => {
+      clearActiveOrder();
+      setPedidoActivo(null);
+    }, timeLeft);
+
+    return () => window.clearTimeout(timeout);
+  }, [pedidoActivo]);
 
   const productosFiltrados = useMemo(() => {
     const termino = busqueda.trim().toLowerCase();
