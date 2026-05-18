@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { socket } from "../services/socket";
 
+import { api } from "../services/api";
+
 import { fmt } from "../utils/format";
 
 import {
@@ -28,6 +30,39 @@ export default function Confirmed() {
 
     return getActiveOrder();
   });
+
+  useEffect(() => {
+    if (!pedido?.id) {
+      return undefined;
+    }
+
+    let activo = true;
+
+    async function cargarPedidoActual() {
+      try {
+        const response = await api.get(
+          `/pedidos/${pedido.id}`
+        );
+
+        if (!activo) {
+          return;
+        }
+
+        setPedido(saveActiveOrder(response.data));
+      } catch {
+        if (activo) {
+          clearActiveOrder();
+          setPedido(null);
+        }
+      }
+    }
+
+    cargarPedidoActual();
+
+    return () => {
+      activo = false;
+    };
+  }, [pedido?.id]);
 
   useEffect(() => {
     if (!pedido) {

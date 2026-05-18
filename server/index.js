@@ -167,6 +167,50 @@ app.get(
 );
 
 /* =========================
+   OBTENER PEDIDO
+========================= */
+
+app.get(
+  "/pedidos/:id",
+  async (req, res) => {
+    try {
+      const pedido =
+        await prisma.pedido.findUnique(
+          {
+            where: {
+              id: Number(
+                req.params.id
+              ),
+            },
+
+            include: {
+              items: true,
+            },
+          }
+        );
+
+      if (!pedido) {
+        return res
+          .status(404)
+          .json({
+            error:
+              "Pedido no encontrado",
+          });
+      }
+
+      res.json(pedido);
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        error:
+          error.message,
+      });
+    }
+  }
+);
+
+/* =========================
    CREAR PEDIDO
 ========================= */
 
