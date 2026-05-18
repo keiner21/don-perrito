@@ -1,60 +1,193 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-const CartContext = createContext();
+const CartContext =
+  createContext();
 
-export function CartProvider({ children }) {
-  const [carrito, setCarrito] = useState([]);
+export function CartProvider({
+  children,
+}) {
 
-  const agregar = (producto) => {
+  // =========================
+  // CARGAR LOCALSTORAGE
+  // =========================
+
+  const [carrito,
+    setCarrito,
+  ] = useState(() => {
+
+    const saved =
+      localStorage.getItem(
+        "carrito"
+      );
+
+    return saved
+      ? JSON.parse(saved)
+      : [];
+  });
+
+  // =========================
+  // GUARDAR LOCALSTORAGE
+  // =========================
+
+  useEffect(() => {
+
+    localStorage.setItem(
+      "carrito",
+      JSON.stringify(
+        carrito
+      )
+    );
+
+  }, [carrito]);
+
+  // =========================
+  // AGREGAR
+  // =========================
+
+  const agregar = (
+    producto
+  ) => {
+
     setCarrito((prev) => {
-      const existe = prev.find((i) => i.id === producto.id);
+
+      const existe =
+        prev.find(
+          (i) =>
+            i.id ===
+            producto.id
+        );
 
       if (existe) {
-        return prev.map((i) =>
-          i.id === producto.id
-            ? { ...i, qty: i.qty + 1 }
-            : i
+
+        return prev.map(
+          (i) =>
+
+            i.id ===
+            producto.id
+
+              ? {
+                  ...i,
+                  qty:
+                    i.qty + 1,
+                }
+
+              : i
         );
       }
 
-      return [...prev, { ...producto, qty: 1 }];
+      return [
+        ...prev,
+
+        {
+          ...producto,
+          qty: 1,
+        },
+      ];
     });
   };
 
-  const cambiarQty = (id, delta) => {
+  // =========================
+  // CAMBIAR QTY
+  // =========================
+
+  const cambiarQty = (
+    id,
+    delta
+  ) => {
+
     setCarrito((prev) =>
+
       prev
         .map((i) =>
+
           i.id === id
-            ? { ...i, qty: i.qty + delta }
+
+            ? {
+                ...i,
+                qty:
+                  i.qty +
+                  delta,
+              }
+
             : i
         )
-        .filter((i) => i.qty > 0)
+
+        .filter(
+          (i) => i.qty > 0
+        )
     );
   };
 
-  const limpiarCarrito = () => {
-    setCarrito([]);
+  // =========================
+  // ELIMINAR
+  // =========================
+
+  const eliminar = (
+    id
+  ) => {
+
+    setCarrito((prev) =>
+
+      prev.filter(
+        (i) => i.id !== id
+      )
+    );
   };
 
-  const totalItems = carrito.reduce(
-    (acc, item) => acc + item.qty,
-    0
-  );
+  // =========================
+  // LIMPIAR
+  // =========================
 
-  const subtotal = carrito.reduce(
-    (acc, item) => acc + item.qty * item.precio,
-    0
-  );
+  const limpiarCarrito =
+    () => {
+
+      setCarrito([]);
+
+      localStorage.removeItem(
+        "carrito"
+      );
+    };
+
+  // =========================
+  // TOTALES
+  // =========================
+
+  const totalItems =
+    carrito.reduce(
+      (acc, item) =>
+        acc + item.qty,
+      0
+    );
+
+  const subtotal =
+    carrito.reduce(
+      (acc, item) =>
+        acc +
+        item.qty *
+          item.precio,
+      0
+    );
 
   return (
     <CartContext.Provider
       value={{
         carrito,
+
         agregar,
+
         cambiarQty,
+
+        eliminar,
+
         limpiarCarrito,
+
         totalItems,
+
         subtotal,
       }}
     >
@@ -63,4 +196,8 @@ export function CartProvider({ children }) {
   );
 }
 
-export const useCart = () => useContext(CartContext);
+export const useCart =
+  () =>
+    useContext(
+      CartContext
+    );
