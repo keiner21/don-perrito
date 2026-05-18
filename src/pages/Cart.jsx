@@ -27,6 +27,10 @@ export default function Cart() {
     setMetodoPago,
   ] = useState("Efectivo");
 
+  const [loading,
+    setLoading,
+  ] = useState(false);
+
   // =========================
   // ELIMINAR ITEM
   // =========================
@@ -68,7 +72,10 @@ export default function Cart() {
         return;
       }
 
+      setLoading(true);
+
       const pedido = {
+
         mesa:
           localStorage.getItem(
             "mesa"
@@ -99,10 +106,31 @@ export default function Cart() {
         response.data
       );
 
-      // 🔥 LIMPIAR
+      // =========================
+      // GUARDAR PEDIDO
+      // =========================
+
+      localStorage.setItem(
+        "ultimoPedido",
+        JSON.stringify(
+          response.data
+        )
+      );
+
+      // =========================
+      // LIMPIAR
+      // =========================
+
       limpiarCarrito();
 
-      // 🔥 IR A CONFIRMED
+      localStorage.removeItem(
+        "carrito"
+      );
+
+      // =========================
+      // REDIRECT
+      // =========================
+
       navigate(
         "/confirmed",
         {
@@ -124,10 +152,54 @@ export default function Cart() {
             error.message
         )
       );
+
+    } finally {
+
+      setLoading(false);
     }
   }
 
+  // =========================
+  // CARRITO VACIO
+  // =========================
+
+  if (carrito.length === 0) {
+
+    return (
+
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+
+        <div className="bg-white rounded-3xl shadow-xl p-10 text-center w-full max-w-md">
+
+          <div className="text-7xl mb-5">
+            🛒
+          </div>
+
+          <h1 className="text-3xl font-bold mb-3">
+            Carrito vacío
+          </h1>
+
+          <p className="text-gray-500 mb-8">
+            Agrega productos al pedido
+          </p>
+
+          <button
+            onClick={() =>
+              navigate("/")
+            }
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-semibold transition"
+          >
+            Volver al menú
+          </button>
+
+        </div>
+
+      </div>
+    );
+  }
+
   return (
+
     <div className="max-w-md mx-auto p-4 pb-32">
 
       {/* VOLVER */}
@@ -161,7 +233,7 @@ export default function Cart() {
 
               <div>
 
-                <h2 className="font-semibold">
+                <h2 className="font-semibold text-lg">
                   {item.nombre}
                 </h2>
 
@@ -171,7 +243,7 @@ export default function Cart() {
                   {item.qty}
                 </p>
 
-                <p className="text-orange-600 font-bold">
+                <p className="text-orange-600 font-bold mt-1">
                   {fmt(
                     item.precio *
                       item.qty
@@ -186,7 +258,7 @@ export default function Cart() {
                     item.id
                   )
                 }
-                className="bg-red-500 text-white px-3 py-2 rounded-xl"
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition"
               >
                 X
               </button>
@@ -244,7 +316,7 @@ export default function Cart() {
             Total:
           </span>
 
-          <span>
+          <span className="text-orange-600">
             {fmt(
               subtotal
             )}
@@ -258,9 +330,14 @@ export default function Cart() {
           onClick={
             enviarPedido
           }
-          className="w-full mt-6 bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl text-lg font-semibold"
+          disabled={loading}
+          className="w-full mt-6 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white py-4 rounded-2xl text-lg font-semibold transition"
         >
-          Enviar Pedido
+
+          {loading
+            ? "Enviando..."
+            : "Enviar Pedido"}
+
         </button>
 
       </div>

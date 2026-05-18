@@ -19,14 +19,64 @@ export default function Confirmed() {
   const { state } =
     useLocation();
 
-  const [pedido,
-    setPedido,
-  ] = useState(
-    state?.pedido
-  );
+  const [pedido, setPedido] =
+    useState(() => {
+      // primero intenta state
+      if (state?.pedido) {
+        return state.pedido;
+      }
+
+      // luego localStorage
+      const guardado =
+        localStorage.getItem(
+          "ultimoPedido"
+        );
+
+      return guardado
+        ? JSON.parse(guardado)
+        : null;
+    });
 
   // =========================
-  // VALIDAR PEDIDO
+  // SOCKET REALTIME
+  // =========================
+
+  useEffect(() => {
+    if (!pedido) return;
+
+    socket.on(
+      "pedido-actualizado",
+      (
+        pedidoActualizado
+      ) => {
+        if (
+          pedidoActualizado.id ===
+          pedido.id
+        ) {
+          setPedido(
+            pedidoActualizado
+          );
+
+          // actualizar storage
+          localStorage.setItem(
+            "ultimoPedido",
+            JSON.stringify(
+              pedidoActualizado
+            )
+          );
+        }
+      }
+    );
+
+    return () => {
+      socket.off(
+        "pedido-actualizado"
+      );
+    };
+  }, [pedido]);
+
+  // =========================
+  // SIN PEDIDO
   // =========================
 
   if (!pedido) {
@@ -38,7 +88,7 @@ export default function Confirmed() {
           </div>
 
           <h1 className="text-2xl font-bold mb-4">
-            Pedido no encontrado
+            No tienes pedidos
           </h1>
 
           <button
@@ -47,46 +97,12 @@ export default function Confirmed() {
             }
             className="bg-black text-white px-6 py-3 rounded-2xl"
           >
-            Volver al menú
+            Ir al menú
           </button>
         </div>
       </div>
     );
   }
-
-  // =========================
-  // SOCKET REALTIME
-  // =========================
-
-  useEffect(() => {
-    socket.on(
-      "pedido-actualizado",
-      (
-        pedidoActualizado
-      ) => {
-
-        console.log(
-          "pedido actualizado",
-          pedidoActualizado
-        );
-
-        if (
-          pedidoActualizado.id ===
-          pedido.id
-        ) {
-          setPedido(
-            pedidoActualizado
-          );
-        }
-      }
-    );
-
-    return () => {
-      socket.off(
-        "pedido-actualizado"
-      );
-    };
-  }, []);
 
   // =========================
   // COLOR ESTADO
@@ -106,16 +122,13 @@ export default function Confirmed() {
         case "Listo":
           return "bg-green-100 text-green-700";
 
-        case "Entregado":
-          return "bg-gray-200 text-gray-700";
-
         default:
           return "bg-gray-100";
       }
     };
 
   // =========================
-  // MENSAJE ESTADO
+  // MENSAJE
   // =========================
 
   const mensajeEstado =
@@ -124,16 +137,13 @@ export default function Confirmed() {
         pedido.estado
       ) {
         case "Pendiente":
-          return "Tu pedido fue recibido";
+          return "Tu pedido fue recibido 🍔";
 
         case "Preparando":
           return "Estamos preparando tu pedido 🍳";
 
         case "Listo":
           return "Tu pedido está listo ✅";
-
-        case "Entregado":
-          return "Pedido entregado 🎉";
 
         default:
           return "";
@@ -147,22 +157,18 @@ export default function Confirmed() {
         {/* TOP */}
 
         <div className="text-center">
+
           <div className="text-7xl mb-4">
             🍔
           </div>
 
           <h1 className="text-3xl font-bold mb-2">
             Pedido #
-            {
-              pedido.numero
-            }
+            {pedido.numero}
           </h1>
 
           <p className="text-gray-500 mb-6">
-            Mesa #
-            {
-              pedido.mesa
-            }
+            Mesa #{pedido.mesa}
           </p>
 
           {/* ESTADO */}
@@ -170,16 +176,13 @@ export default function Confirmed() {
           <div
             className={`inline-block px-5 py-3 rounded-full font-medium text-sm mb-6 ${colorEstado()}`}
           >
-            {
-              pedido.estado
-            }
+            {pedido.estado}
           </div>
-
-          {/* MENSAJE */}
 
           <p className="text-lg font-medium mb-8">
             {mensajeEstado()}
           </p>
+
         </div>
 
         {/* ITEMS */}
@@ -188,19 +191,12 @@ export default function Confirmed() {
           {pedido.items.map(
             (item) => (
               <div
-                key={
-                  item.id
-                }
+                key={item.id}
                 className="flex justify-between"
               >
                 <span>
-                  {
-                    item.qty
-                  }
-                  x{" "}
-                  {
-                    item.nombre
-                  }
+                  {item.qty}x{" "}
+                  {item.nombre}
                 </span>
 
                 <span>
@@ -217,9 +213,7 @@ export default function Confirmed() {
         {/* TOTAL */}
 
         <div className="flex justify-between mt-6 text-xl font-bold">
-          <span>
-            Total
-          </span>
+          <span>Total</span>
 
           <span className="text-orange-600">
             {fmt(
@@ -228,16 +222,29 @@ export default function Confirmed() {
           </span>
         </div>
 
-        {/* BOTON */}
+        {/* BOTONES */}
 
-        <button
-          onClick={() =>
-            navigate("/")
-          }
-          className="w-full mt-8 bg-black text-white py-4 rounded-2xl"
-        >
-          Volver al menú
-        </button>
+        <div className="grid grid-cols-2 gap-4 mt-8">
+
+          <button
+            onClick={() =>
+              navigate("/")
+            }
+            className="bg-gray-200 py-4 rounded-2xl font-medium"
+          >
+            Volver al menú
+          </button>
+
+          <button
+            onClick={() =>
+              window.location.reload()
+            }
+            className="bg-black text-white py-4 rounded-2xl font-medium"
+          >
+            Actualizar
+          </button>
+
+        </div>
       </div>
     </div>
   );
