@@ -194,7 +194,7 @@ export default function Admin() {
   const diasDisponibles = useMemo(() => {
     const keys = [...new Set(pedidos.map((pedido) => getDateKey(pedido.fecha)))];
 
-    return keys.sort((a, b) => new Date(`${b}T00:00:00`) - new Date(`${a}T00:00:00`));
+    return keys.sort((a, b) => dateFromKey(b) - dateFromKey(a));
   }, [pedidos]);
 
   const pedidosDelDia = useMemo(
@@ -240,7 +240,7 @@ export default function Admin() {
     }, {});
 
     return Object.entries(acumulado)
-      .sort(([a], [b]) => new Date(`${a}T00:00:00`) - new Date(`${b}T00:00:00`))
+      .sort(([a], [b]) => dateFromKey(a) - dateFromKey(b))
       .map(([, value]) => value);
   }, [pedidos]);
 
@@ -474,7 +474,7 @@ function Informe({ exportarExcel, pedidos, resumenTotal, ventasPorDia }) {
     }, {});
 
     return Object.values(acumulado).sort(
-      (a, b) => new Date(`${b.key}T00:00:00`) - new Date(`${a.key}T00:00:00`)
+      (a, b) => dateFromKey(b.key) - dateFromKey(a.key)
     );
   }, [pedidos]);
 
@@ -685,30 +685,40 @@ function getResumen(pedidos) {
 }
 
 function getTodayKey() {
-  return getDateKey(new Date().toISOString());
+  return getDateKey(new Date());
 }
 
 function getRelativeDateKey(days) {
   const date = new Date();
   date.setDate(date.getDate() + days);
-  return getDateKey(date.toISOString());
+  return getDateKey(date);
 }
 
 function getDateKey(fecha) {
-  return new Date(fecha).toISOString().split("T")[0];
+  const date = new Date(fecha);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function formatShortDate(key) {
-  return new Date(`${key}T00:00:00`).toLocaleDateString("es-CO", {
+  return dateFromKey(key).toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "short",
   });
 }
 
 function formatLongDate(key) {
-  return new Date(`${key}T00:00:00`).toLocaleDateString("es-CO", {
+  return dateFromKey(key).toLocaleDateString("es-CO", {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+}
+
+function dateFromKey(key) {
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
