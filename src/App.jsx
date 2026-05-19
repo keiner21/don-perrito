@@ -13,7 +13,6 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import TableMenu from "./pages/TableMenu";
 import QrTables from "./pages/QrTables";
-import PaymentResult from "./pages/PaymentResult";
 
 function ProtectedRoute({
   children,
@@ -50,11 +49,6 @@ export default function App() {
         <Route
           path="/payment"
           element={<Payment />}
-        />
-
-        <Route
-          path="/payment-result"
-          element={<PaymentResult />}
         />
 
         <Route

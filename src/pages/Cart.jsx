@@ -15,15 +15,6 @@ const METODOS_PAGO = [
   "Nequi",
   "Daviplata",
   "Bancolombia",
-  "PSE",
-  "Tarjeta",
-];
-
-const METODOS_ONLINE = [
-  "Nequi",
-  "Daviplata",
-  "Bancolombia",
-  "PSE",
   "Tarjeta",
 ];
 
@@ -67,24 +58,9 @@ export default function Cart() {
 
       const response = await api.post("/pedidos", pedido);
 
-      const pedidoCreado =
-        response.data.pedido ||
-        response.data;
+      const pedidoGuardado = saveActiveOrder(response.data);
 
       limpiarCarrito();
-
-      if (
-        METODOS_ONLINE.includes(
-          metodoPago
-        ) &&
-        response.data.checkoutUrl
-      ) {
-        window.location.href =
-          response.data.checkoutUrl;
-        return;
-      }
-
-      const pedidoGuardado = saveActiveOrder(pedidoCreado);
 
       navigate("/confirmed", {
         state: {
@@ -281,12 +257,8 @@ export default function Cart() {
               className="mt-6 w-full rounded-2xl bg-orange-600 py-4 text-lg font-black text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               {loading
-                ? "Procesando..."
-                : METODOS_ONLINE.includes(
-                    metodoPago
-                  )
-                  ? "Pagar ahora"
-                  : "Enviar pedido"}
+                ? "Enviando..."
+                : "Enviar pedido"}
             </button>
           </aside>
         </div>
