@@ -13,10 +13,6 @@ import {
 
 import * as XLSX from "xlsx";
 
-import jsPDF from "jspdf";
-
-import "jspdf-autotable";
-
 import ding from "../assets/ding.mp3";
 
 import { api } from "../services/api";
@@ -26,11 +22,12 @@ import { socket } from "../services/socket";
 import { fmt } from "../utils/format";
 
 const ESTADOS = ["Todos", "Pendiente", "Preparando", "Listo"];
+const VISTAS = ["Pedidos", "Informe"];
 
 const estadoClasses = {
-  Pendiente: "bg-amber-100 text-amber-800 border-amber-200",
-  Preparando: "bg-sky-100 text-sky-800 border-sky-200",
-  Listo: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Pendiente: "border-amber-200 bg-amber-100 text-amber-800",
+  Preparando: "border-sky-200 bg-sky-100 text-sky-800",
+  Listo: "border-emerald-200 bg-emerald-100 text-emerald-800",
 };
 
 export default function Admin() {
@@ -38,8 +35,9 @@ export default function Admin() {
 
   const [pedidos, setPedidos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
-  const [fechaFiltro, setFechaFiltro] = useState("");
+  const [diaActivo, setDiaActivo] = useState(getTodayKey());
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
+  const [vistaActiva, setVistaActiva] = useState("Pedidos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sonidoActivo, setSonidoActivo] = useState(false);
@@ -53,7 +51,6 @@ export default function Admin() {
 
   useEffect(() => {
     sonidoActivoRef.current = sonidoActivo;
-    localStorage.setItem("adminSound", sonidoActivo ? "on" : "off");
   }, [sonidoActivo]);
 
   useEffect(() => {
@@ -70,6 +67,8 @@ export default function Admin() {
       }
 
       setPedidos((prev) => [pedido, ...prev]);
+      setDiaActivo(getDateKey(pedido.fecha));
+      setVistaActiva("Pedidos");
     });
 
     socket.on("pedido-actualizado", (pedidoActualizado) => {
@@ -192,83 +191,61 @@ export default function Admin() {
     }
   }
 
-  const pedidosFiltrados = useMemo(() => {
+  const diasDisponibles = useMemo(() => {
+    const keys = [...new Set(pedidos.map((pedido) => getDateKey(pedido.fecha)))];
+
+    return keys.sort((a, b) => new Date(`${b}T00:00:00`) - new Date(`${a}T00:00:00`));
+  }, [pedidos]);
+
+  const pedidosDelDia = useMemo(
+    () => pedidos.filter((pedido) => getDateKey(pedido.fecha) === diaActivo),
+    [diaActivo, pedidos]
+  );
+
+  const pedidosOperativos = useMemo(() => {
     const termino = busqueda.trim().toLowerCase();
 
-    return pedidos.filter((pedido) => {
+    return pedidosDelDia.filter((pedido) => {
       const coincideBusqueda =
         termino === "" ||
         pedido.numero.toString().includes(termino) ||
         pedido.mesa.toString().includes(termino) ||
         pedido.items.some((item) => item.nombre.toLowerCase().includes(termino));
 
-      const coincideFecha =
-        fechaFiltro === "" ||
-        new Date(pedido.fecha).toISOString().split("T")[0] === fechaFiltro;
-
       const coincideEstado =
         estadoFiltro === "Todos" || pedido.estado === estadoFiltro;
 
-      return coincideBusqueda && coincideFecha && coincideEstado;
+      return coincideBusqueda && coincideEstado;
     });
-  }, [busqueda, fechaFiltro, estadoFiltro, pedidos]);
+  }, [busqueda, estadoFiltro, pedidosDelDia]);
 
-  const resumen = useMemo(() => {
-    const ventasTotales = pedidosFiltrados.reduce(
-      (acc, pedido) => acc + pedido.total,
-      0
-    );
-
-    return {
-      ventasTotales,
-      totalPedidos: pedidosFiltrados.length,
-      pendientes: pedidosFiltrados.filter((p) => p.estado === "Pendiente")
-        .length,
-      preparando: pedidosFiltrados.filter((p) => p.estado === "Preparando")
-        .length,
-      listos: pedidosFiltrados.filter((p) => p.estado === "Listo").length,
-    };
-  }, [pedidosFiltrados]);
+  const resumenDia = useMemo(() => getResumen(pedidosDelDia), [pedidosDelDia]);
+  const resumenTotal = useMemo(() => getResumen(pedidos), [pedidos]);
 
   const ventasPorDia = useMemo(() => {
-    const acumulado = pedidosFiltrados.reduce((acc, pedido) => {
-      const fecha = new Date(pedido.fecha).toLocaleDateString("es-CO", {
-        day: "2-digit",
-        month: "short",
-      });
+    const acumulado = pedidos.reduce((acc, pedido) => {
+      const key = getDateKey(pedido.fecha);
 
-      if (!acc[fecha]) {
-        acc[fecha] = { fecha, total: 0 };
+      if (!acc[key]) {
+        acc[key] = {
+          fecha: formatShortDate(key),
+          total: 0,
+          pedidos: 0,
+        };
       }
 
-      acc[fecha].total += pedido.total;
+      acc[key].total += pedido.total;
+      acc[key].pedidos += 1;
       return acc;
     }, {});
 
-    return Object.values(acumulado);
-  }, [pedidosFiltrados]);
-
-  const pedidosAgrupados = useMemo(
-    () =>
-      pedidosFiltrados.reduce((acc, pedido) => {
-        const key = new Date(pedido.fecha).toLocaleDateString("es-CO", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        });
-
-        if (!acc[key]) {
-          acc[key] = [];
-        }
-
-        acc[key].push(pedido);
-        return acc;
-      }, {}),
-    [pedidosFiltrados]
-  );
+    return Object.entries(acumulado)
+      .sort(([a], [b]) => new Date(`${a}T00:00:00`) - new Date(`${b}T00:00:00`))
+      .map(([, value]) => value);
+  }, [pedidos]);
 
   function exportarExcel() {
-    const data = pedidosFiltrados.map((pedido) => ({
+    const data = pedidos.map((pedido) => ({
       Pedido: pedido.numero,
       Mesa: pedido.mesa,
       Estado: pedido.estado,
@@ -279,28 +256,8 @@ export default function Admin() {
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Ventas");
-    XLSX.writeFile(wb, "ventas-don-perrito.xlsx");
-  }
-
-  function exportarPDF() {
-    const doc = new jsPDF();
-
-    doc.text("Reporte de ventas - Don Perrito", 14, 20);
-
-    doc.autoTable({
-      startY: 30,
-      head: [["Pedido", "Mesa", "Estado", "Metodo", "Total"]],
-      body: pedidosFiltrados.map((pedido) => [
-        pedido.numero,
-        pedido.mesa,
-        pedido.estado,
-        pedido.metodo,
-        fmt(pedido.total),
-      ]),
-    });
-
-    doc.save("ventas-don-perrito.pdf");
+    XLSX.utils.book_append_sheet(wb, ws, "Informe");
+    XLSX.writeFile(wb, "informe-don-perrito.xlsx");
   }
 
   return (
@@ -313,11 +270,11 @@ export default function Admin() {
             </p>
 
             <h1 className="text-4xl font-black text-gray-950">
-              Pedidos y ventas
+              Pedidos
             </h1>
 
             <p className="mt-1 text-gray-500">
-              Controla estados, exporta reportes y revisa el movimiento del día.
+              Atiende el día actual y revisa informes cuando lo necesites.
             </p>
           </div>
 
@@ -336,33 +293,10 @@ export default function Admin() {
             </button>
 
             <button
-              onClick={async () => {
-                await activarSonido();
-              }}
-              className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-orange-50"
-            >
-              Probar sonido
-            </button>
-
-            <button
               onClick={cargarPedidos}
               className="rounded-2xl bg-white px-4 py-3 text-sm font-bold shadow-sm transition hover:bg-gray-50"
             >
               Actualizar
-            </button>
-
-            <button
-              onClick={exportarExcel}
-              className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
-            >
-              Excel
-            </button>
-
-            <button
-              onClick={exportarPDF}
-              className="rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700"
-            >
-              PDF
             </button>
 
             <button
@@ -380,108 +314,258 @@ export default function Admin() {
           </div>
         )}
 
-        <section className="mb-6 grid gap-3 rounded-3xl bg-white p-4 shadow-lg md:grid-cols-[1fr_auto_auto]">
-          <input
-            type="search"
-            placeholder="Buscar pedido, mesa o producto"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="rounded-2xl border border-gray-200 px-4 py-3 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-          />
-
-          <input
-            type="date"
-            value={fechaFiltro}
-            onChange={(e) => setFechaFiltro(e.target.value)}
-            className="rounded-2xl border border-gray-200 px-4 py-3 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-          />
-
-          <select
-            value={estadoFiltro}
-            onChange={(e) => setEstadoFiltro(e.target.value)}
-            className="rounded-2xl border border-gray-200 px-4 py-3 font-semibold outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-          >
-            {ESTADOS.map((estado) => (
-              <option key={estado} value={estado}>
-                {estado}
-              </option>
+        <section className="mb-6 flex flex-col gap-3 rounded-3xl bg-white p-3 shadow-lg md:flex-row md:items-center md:justify-between">
+          <div className="flex gap-2">
+            {VISTAS.map((vista) => (
+              <button
+                key={vista}
+                onClick={() => setVistaActiva(vista)}
+                className={`rounded-2xl px-5 py-3 text-sm font-black transition ${
+                  vistaActiva === vista
+                    ? "bg-zinc-950 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-orange-700"
+                }`}
+              >
+                {vista}
+              </button>
             ))}
-          </select>
-        </section>
-
-        <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <Metric label="Ventas" value={fmt(resumen.ventasTotales)} />
-          <Metric label="Pedidos" value={resumen.totalPedidos} />
-          <Metric label="Pendientes" value={resumen.pendientes} tone="amber" />
-          <Metric label="Preparando" value={resumen.preparando} tone="sky" />
-          <Metric label="Listos" value={resumen.listos} tone="emerald" />
-        </section>
-
-        <section className="mb-8 rounded-3xl bg-white p-5 shadow-lg">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-black">
-              Ventas filtradas por día
-            </h2>
-
-            <span className="text-sm font-semibold text-gray-500">
-              {pedidosFiltrados.length} resultado
-              {pedidosFiltrados.length === 1 ? "" : "s"}
-            </span>
           </div>
 
-          <div className="h-72">
-            {ventasPorDia.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ventasPorDia}>
-                  <XAxis dataKey="fecha" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => fmt(value)} />
-                  <Bar dataKey="total" fill="#f97316" radius={[10, 10, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-full items-center justify-center rounded-2xl bg-gray-50 text-sm font-semibold text-gray-500">
-                No hay ventas para estos filtros.
-              </div>
-            )}
-          </div>
-        </section>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setDiaActivo(getTodayKey())}
+              className="rounded-2xl bg-orange-600 px-4 py-3 text-sm font-black text-white transition hover:bg-orange-700"
+            >
+              Hoy
+            </button>
 
-        {loading ? (
-          <div className="rounded-3xl bg-white p-10 text-center font-bold text-gray-500 shadow">
-            Cargando pedidos...
-          </div>
-        ) : Object.keys(pedidosAgrupados).length === 0 ? (
-          <div className="rounded-3xl bg-white p-10 text-center shadow">
-            <h2 className="text-2xl font-black">
-              No hay pedidos
-            </h2>
+            <button
+              onClick={() => setDiaActivo(getRelativeDateKey(-1))}
+              className="rounded-2xl bg-gray-100 px-4 py-3 text-sm font-black text-gray-700 transition hover:bg-gray-200"
+            >
+              Ayer
+            </button>
 
-            <p className="mt-2 text-gray-500">
-              Ajusta los filtros o espera un nuevo pedido.
-            </p>
-          </div>
-        ) : (
-          Object.entries(pedidosAgrupados).map(([dia, pedidosDia]) => (
-            <section key={dia} className="mb-8">
-              <h2 className="mb-4 text-2xl font-black capitalize">
-                {dia}
-              </h2>
-
-              <div className="grid gap-4">
-                {pedidosDia.map((pedido) => (
-                  <PedidoCard
-                    key={pedido.id}
-                    pedido={pedido}
-                    onCambiarEstado={cambiarEstado}
-                  />
+            <select
+              value={diaActivo}
+              onChange={(e) => setDiaActivo(e.target.value)}
+              className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+            >
+              {[diaActivo, ...diasDisponibles]
+                .filter(Boolean)
+                .filter((dia, index, arr) => arr.indexOf(dia) === index)
+                .map((dia) => (
+                  <option key={dia} value={dia}>
+                    {formatLongDate(dia)}
+                  </option>
                 ))}
-              </div>
+            </select>
+          </div>
+        </section>
+
+        {vistaActiva === "Pedidos" ? (
+          <>
+            <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              <Metric label="Ventas del día" value={fmt(resumenDia.ventas)} />
+              <Metric label="Pedidos" value={resumenDia.total} />
+              <Metric label="Pendientes" value={resumenDia.pendientes} tone="amber" />
+              <Metric label="Preparando" value={resumenDia.preparando} tone="sky" />
+              <Metric label="Listos" value={resumenDia.listos} tone="emerald" />
             </section>
-          ))
+
+            <section className="mb-6 grid gap-3 rounded-3xl bg-white p-4 shadow-lg md:grid-cols-[1fr_auto]">
+              <input
+                type="search"
+                placeholder="Buscar pedido, mesa o producto"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="rounded-2xl border border-gray-200 px-4 py-3 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              />
+
+              <select
+                value={estadoFiltro}
+                onChange={(e) => setEstadoFiltro(e.target.value)}
+                className="rounded-2xl border border-gray-200 px-4 py-3 font-semibold outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              >
+                {ESTADOS.map((estado) => (
+                  <option key={estado} value={estado}>
+                    {estado}
+                  </option>
+                ))}
+              </select>
+            </section>
+
+            <section className="mb-8">
+              <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-black capitalize">
+                    {formatLongDate(diaActivo)}
+                  </h2>
+
+                  <p className="text-sm font-semibold text-gray-500">
+                    {pedidosOperativos.length} pedido
+                    {pedidosOperativos.length === 1 ? "" : "s"} en pantalla
+                  </p>
+                </div>
+              </div>
+
+              {loading ? (
+                <EmptyState text="Cargando pedidos..." />
+              ) : pedidosOperativos.length === 0 ? (
+                <EmptyState text="No hay pedidos para este día o filtro." />
+              ) : (
+                <div className="grid gap-4">
+                  {pedidosOperativos.map((pedido) => (
+                    <PedidoCard
+                      key={pedido.id}
+                      pedido={pedido}
+                      onCambiarEstado={cambiarEstado}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        ) : (
+          <Informe
+            exportarExcel={exportarExcel}
+            pedidos={pedidos}
+            resumenTotal={resumenTotal}
+            ventasPorDia={ventasPorDia}
+          />
         )}
       </div>
     </div>
+  );
+}
+
+function Informe({ exportarExcel, pedidos, resumenTotal, ventasPorDia }) {
+  const dias = useMemo(() => {
+    const acumulado = pedidos.reduce((acc, pedido) => {
+      const key = getDateKey(pedido.fecha);
+
+      if (!acc[key]) {
+        acc[key] = {
+          key,
+          ventas: 0,
+          pedidos: 0,
+          pendientes: 0,
+          preparando: 0,
+          listos: 0,
+        };
+      }
+
+      acc[key].ventas += pedido.total;
+      acc[key].pedidos += 1;
+
+      if (pedido.estado === "Pendiente") {
+        acc[key].pendientes += 1;
+      }
+
+      if (pedido.estado === "Preparando") {
+        acc[key].preparando += 1;
+      }
+
+      if (pedido.estado === "Listo") {
+        acc[key].listos += 1;
+      }
+
+      return acc;
+    }, {});
+
+    return Object.values(acumulado).sort(
+      (a, b) => new Date(`${b.key}T00:00:00`) - new Date(`${a.key}T00:00:00`)
+    );
+  }, [pedidos]);
+
+  return (
+    <>
+      <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <Metric label="Ventas totales" value={fmt(resumenTotal.ventas)} />
+        <Metric label="Pedidos" value={resumenTotal.total} />
+        <Metric label="Pendientes" value={resumenTotal.pendientes} tone="amber" />
+        <Metric label="Preparando" value={resumenTotal.preparando} tone="sky" />
+        <Metric label="Listos" value={resumenTotal.listos} tone="emerald" />
+      </section>
+
+      <section className="mb-8 rounded-3xl bg-white p-5 shadow-lg">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-black">
+              Ventas por día
+            </h2>
+
+            <p className="text-sm font-semibold text-gray-500">
+              Resumen general de todos los días registrados.
+            </p>
+          </div>
+
+          <button
+            onClick={exportarExcel}
+            className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+          >
+            Exportar Excel
+          </button>
+        </div>
+
+        <div className="h-72">
+          {ventasPorDia.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ventasPorDia}>
+                <XAxis dataKey="fecha" />
+                <YAxis />
+                <Tooltip formatter={(value) => fmt(value)} />
+                <Bar dataKey="total" fill="#f97316" radius={[10, 10, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyState text="No hay ventas registradas." />
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-3xl bg-white p-5 shadow-lg">
+        <h2 className="mb-4 text-xl font-black">
+          Informe por día
+        </h2>
+
+        {dias.length === 0 ? (
+          <EmptyState text="No hay información para mostrar." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead>
+                <tr className="border-b text-gray-500">
+                  <th className="py-3">Día</th>
+                  <th className="py-3">Pedidos</th>
+                  <th className="py-3">Ventas</th>
+                  <th className="py-3">Pendientes</th>
+                  <th className="py-3">Preparando</th>
+                  <th className="py-3">Listos</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {dias.map((dia) => (
+                  <tr key={dia.key} className="border-b last:border-b-0">
+                    <td className="py-4 font-black capitalize">
+                      {formatLongDate(dia.key)}
+                    </td>
+                    <td className="py-4 font-bold">{dia.pedidos}</td>
+                    <td className="py-4 font-bold text-orange-600">
+                      {fmt(dia.ventas)}
+                    </td>
+                    <td className="py-4">{dia.pendientes}</td>
+                    <td className="py-4">{dia.preparando}</td>
+                    <td className="py-4">{dia.listos}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </>
   );
 }
 
@@ -502,6 +586,14 @@ function Metric({ label, value, tone = "orange" }) {
       <p className="mt-3 text-3xl font-black">
         {value}
       </p>
+    </div>
+  );
+}
+
+function EmptyState({ text }) {
+  return (
+    <div className="rounded-3xl bg-white p-10 text-center font-bold text-gray-500 shadow">
+      {text}
     </div>
   );
 }
@@ -580,4 +672,43 @@ function PedidoCard({ pedido, onCambiarEstado }) {
       </div>
     </article>
   );
+}
+
+function getResumen(pedidos) {
+  return {
+    ventas: pedidos.reduce((acc, pedido) => acc + pedido.total, 0),
+    total: pedidos.length,
+    pendientes: pedidos.filter((pedido) => pedido.estado === "Pendiente").length,
+    preparando: pedidos.filter((pedido) => pedido.estado === "Preparando").length,
+    listos: pedidos.filter((pedido) => pedido.estado === "Listo").length,
+  };
+}
+
+function getTodayKey() {
+  return getDateKey(new Date().toISOString());
+}
+
+function getRelativeDateKey(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return getDateKey(date.toISOString());
+}
+
+function getDateKey(fecha) {
+  return new Date(fecha).toISOString().split("T")[0];
+}
+
+function formatShortDate(key) {
+  return new Date(`${key}T00:00:00`).toLocaleDateString("es-CO", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+function formatLongDate(key) {
+  return new Date(`${key}T00:00:00`).toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
