@@ -15,6 +15,8 @@ import * as XLSX from "xlsx";
 
 import ding from "../assets/ding.mp3";
 
+import logoDonPerrito from "../assets/logo-don-perrito.png";
+
 import { api } from "../services/api";
 
 import { socket } from "../services/socket";
@@ -261,21 +263,29 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-100 p-4 text-gray-900 sm:p-6">
+    <div className="app-shell min-h-screen p-4 text-gray-900 sm:p-6">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-orange-600">
-              Panel administrativo
-            </p>
+        <header className="brand-surface mb-6 flex flex-col gap-4 rounded-3xl p-5 text-white shadow-2xl lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <img
+              src={logoDonPerrito}
+              alt="Don Perrito"
+              className="h-16 w-16 rounded-2xl object-cover shadow-xl ring-2 ring-orange-300/50"
+            />
 
-            <h1 className="text-4xl font-black text-gray-950">
-              Pedidos
-            </h1>
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-orange-300">
+                Panel administrativo
+              </p>
 
-            <p className="mt-1 text-gray-500">
-              Atiende el día actual y revisa informes cuando lo necesites.
-            </p>
+              <h1 className="text-4xl font-black">
+                Pedidos
+              </h1>
+
+              <p className="mt-1 text-gray-300">
+                Atiende el día actual y revisa informes cuando lo necesites.
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -314,7 +324,7 @@ export default function Admin() {
           </div>
         )}
 
-        <section className="mb-6 flex flex-col gap-3 rounded-3xl bg-white p-3 shadow-lg md:flex-row md:items-center md:justify-between">
+        <section className="glass-card mb-6 flex flex-col gap-3 rounded-3xl p-3 md:flex-row md:items-center md:justify-between">
           <div className="flex gap-2">
             {VISTAS.map((vista) => (
               <button
@@ -373,7 +383,7 @@ export default function Admin() {
               <Metric label="Listos" value={resumenDia.listos} tone="emerald" />
             </section>
 
-            <section className="mb-6 grid gap-3 rounded-3xl bg-white p-4 shadow-lg md:grid-cols-[1fr_auto]">
+            <section className="glass-card mb-6 grid gap-3 rounded-3xl p-4 md:grid-cols-[1fr_auto]">
               <input
                 type="search"
                 placeholder="Buscar pedido, mesa o producto"
@@ -488,7 +498,7 @@ function Informe({ exportarExcel, pedidos, resumenTotal, ventasPorDia }) {
         <Metric label="Listos" value={resumenTotal.listos} tone="emerald" />
       </section>
 
-      <section className="mb-8 rounded-3xl bg-white p-5 shadow-lg">
+      <section className="glass-card mb-8 rounded-3xl p-5">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-black">
@@ -524,7 +534,7 @@ function Informe({ exportarExcel, pedidos, resumenTotal, ventasPorDia }) {
         </div>
       </section>
 
-      <section className="rounded-3xl bg-white p-5 shadow-lg">
+      <section className="glass-card rounded-3xl p-5">
         <h2 className="mb-4 text-xl font-black">
           Informe por día
         </h2>
@@ -578,7 +588,7 @@ function Metric({ label, value, tone = "orange" }) {
   };
 
   return (
-    <div className={`${tones[tone]} rounded-3xl p-5 text-white shadow-lg`}>
+    <div className={`${tones[tone]} lift-card rounded-3xl p-5 text-white shadow-lg`}>
       <p className="text-sm font-bold uppercase tracking-wide opacity-80">
         {label}
       </p>
@@ -592,7 +602,7 @@ function Metric({ label, value, tone = "orange" }) {
 
 function EmptyState({ text }) {
   return (
-    <div className="rounded-3xl bg-white p-10 text-center font-bold text-gray-500 shadow">
+    <div className="glass-card rounded-3xl p-10 text-center font-bold text-gray-500">
       {text}
     </div>
   );
@@ -600,7 +610,7 @@ function EmptyState({ text }) {
 
 function PedidoCard({ pedido, onCambiarEstado }) {
   return (
-    <article className="rounded-3xl bg-white p-5 shadow-lg">
+    <article className="animate-in lift-card rounded-3xl border border-white bg-white p-5 shadow-lg">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">

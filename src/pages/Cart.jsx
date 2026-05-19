@@ -10,6 +10,8 @@ import { fmt } from "../utils/format";
 
 import { saveActiveOrder } from "../utils/activeOrder";
 
+import logoDonPerrito from "../assets/logo-don-perrito.png";
+
 const METODOS_PAGO = [
   "Efectivo",
   "Nequi",
@@ -80,11 +82,13 @@ export default function Cart() {
 
   if (carrito.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-stone-100 p-6">
-        <div className="w-full max-w-md rounded-3xl bg-white p-10 text-center shadow-xl">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-orange-100 text-4xl">
-            🛒
-          </div>
+      <div className="app-shell flex min-h-screen items-center justify-center p-6">
+        <div className="animate-in glass-card w-full max-w-md rounded-3xl p-10 text-center">
+          <img
+            src={logoDonPerrito}
+            alt="Don Perrito"
+            className="mx-auto mb-5 h-24 w-24 rounded-3xl object-cover shadow-xl ring-4 ring-orange-100"
+          />
 
           <h1 className="text-3xl font-black">
             Carrito vacío
@@ -106,7 +110,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-100 px-4 py-6 pb-32">
+    <div className="app-shell min-h-screen px-4 py-6 pb-32">
       <div className="mx-auto max-w-3xl">
         <button
           onClick={() => navigate(-1)}
@@ -136,7 +140,7 @@ export default function Cart() {
             {carrito.map((item) => (
               <article
                 key={item.id}
-                className="rounded-3xl bg-white p-4 shadow-lg"
+                className="animate-in lift-card rounded-3xl border border-white bg-white p-4 shadow-lg"
               >
                 <div className="flex gap-4">
                   <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-orange-50">
@@ -200,7 +204,7 @@ export default function Cart() {
             ))}
           </section>
 
-          <aside className="h-fit rounded-3xl bg-white p-5 shadow-lg">
+          <aside className="glass-card h-fit rounded-3xl p-5">
             <h2 className="text-xl font-black">
               Resumen
             </h2>
@@ -254,7 +258,7 @@ export default function Cart() {
             <button
               onClick={enviarPedido}
               disabled={loading}
-              className="mt-6 w-full rounded-2xl bg-orange-600 py-4 text-lg font-black text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="mt-6 w-full rounded-2xl bg-gradient-to-r from-orange-600 to-amber-500 py-4 text-lg font-black text-white shadow-lg shadow-orange-500/25 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400"
             >
               {loading
                 ? "Enviando..."

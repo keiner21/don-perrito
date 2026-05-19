@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 import { api } from "../services/api";
 
+import logoDonPerrito from "../assets/logo-don-perrito.png";
+
 export default function Login() {
   const navigate = useNavigate();
 
@@ -34,12 +36,18 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-100 p-6">
+    <div className="app-shell flex min-h-screen items-center justify-center p-6">
       <form
         onSubmit={login}
-        className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl"
+        className="animate-in glass-card w-full max-w-md rounded-3xl p-8"
       >
         <div className="mb-8 text-center">
+          <img
+            src={logoDonPerrito}
+            alt="Don Perrito"
+            className="mx-auto mb-5 h-24 w-24 rounded-3xl object-cover shadow-xl ring-4 ring-orange-100"
+          />
+
           <p className="text-sm font-bold uppercase tracking-wide text-orange-600">
             Don Perrito
           </p>
@@ -92,7 +100,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-6 w-full rounded-2xl bg-zinc-950 py-4 font-black text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-400"
+          className="mt-6 w-full rounded-2xl bg-gradient-to-r from-zinc-950 to-orange-900 py-4 font-black text-white shadow-lg transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400"
         >
           {loading ? "Ingresando..." : "Ingresar"}
         </button>

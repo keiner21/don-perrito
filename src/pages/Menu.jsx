@@ -17,6 +17,8 @@ import {
   saveActiveOrder,
 } from "../utils/activeOrder";
 
+import logoDonPerrito from "../assets/logo-don-perrito.png";
+
 export default function Menu() {
   const navigate = useNavigate();
 
@@ -109,10 +111,17 @@ export default function Menu() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 text-gray-900">
-      <header className="sticky top-0 z-50 border-b border-black/10 bg-zinc-950 text-white shadow-lg">
+    <div className="app-shell min-h-screen text-gray-900">
+      <header className="brand-surface sticky top-0 z-50 border-b border-white/10 text-white shadow-2xl">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="flex items-center gap-4">
+            <img
+              src={logoDonPerrito}
+              alt="Don Perrito"
+              className="h-16 w-16 rounded-2xl object-cover shadow-xl ring-2 ring-orange-300/50"
+            />
+
+            <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-orange-300">
               Mesa #{mesa}
             </p>
@@ -121,9 +130,10 @@ export default function Menu() {
               Don Perrito
             </h1>
 
-            <p className="text-sm text-gray-300">
-              Hamburguesas, perros y antojos al momento
-            </p>
+              <p className="text-sm text-gray-300">
+                Hamburguesas, perros y antojos al momento
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -156,7 +166,7 @@ export default function Menu() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-32 pt-6">
-        <section className="mb-6 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+        <section className="animate-in glass-card mb-6 grid gap-4 rounded-3xl p-5 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <h2 className="text-2xl font-black sm:text-3xl">
               Menú
@@ -216,15 +226,16 @@ export default function Menu() {
               return (
                 <article
                   key={item.id}
-                  className="group overflow-hidden rounded-3xl bg-white shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
+                  className="animate-in lift-card group overflow-hidden rounded-3xl border border-white bg-white shadow-lg"
                 >
-                  <div className="flex h-56 w-full items-center justify-center overflow-hidden bg-orange-50">
+                  <div className="relative flex h-56 w-full items-center justify-center overflow-hidden bg-orange-50">
                     <img
                       src={item.imagen}
                       alt={item.nombre}
                       className={imagenMenuClass(item)}
                       loading="lazy"
                     />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition group-hover:opacity-100" />
                   </div>
 
                   <div className="p-5">

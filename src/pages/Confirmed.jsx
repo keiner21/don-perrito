@@ -129,8 +129,8 @@ export default function Confirmed() {
 
   if (!pedido) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-stone-100 p-6">
-        <div className="w-full max-w-md rounded-3xl bg-white p-10 text-center shadow-xl">
+      <div className="app-shell flex min-h-screen items-center justify-center p-6">
+        <div className="animate-in glass-card w-full max-w-md rounded-3xl p-10 text-center">
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-orange-100 text-4xl">
             🍔
           </div>
@@ -155,8 +155,8 @@ export default function Confirmed() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-100 p-4 sm:p-6">
-      <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+    <div className="app-shell flex min-h-screen items-center justify-center p-4 sm:p-6">
+      <div className="animate-in glass-card w-full max-w-2xl rounded-3xl p-6 sm:p-8">
         <div className="text-center">
           <p className="text-sm font-bold uppercase tracking-wide text-orange-600">
             Mesa #{pedido.mesa}
@@ -171,10 +171,10 @@ export default function Confirmed() {
           </p>
         </div>
 
-        <section className="mt-8 overflow-hidden rounded-3xl bg-orange-50">
+        <section className="mt-8 overflow-hidden rounded-3xl border border-orange-100 bg-orange-50">
           <div className="grid items-center gap-5 p-5 sm:grid-cols-[11rem_1fr]">
             <div className="relative mx-auto h-40 w-40">
-              <div className="absolute inset-0 animate-ping rounded-full bg-orange-200 opacity-40" />
+              <div className="pulse-soft absolute inset-0 rounded-full bg-orange-200 opacity-40" />
 
               <img
                 src={seguimientoPedido}
@@ -204,7 +204,7 @@ export default function Confirmed() {
         <section className="mt-8">
           <div className="h-4 overflow-hidden rounded-full bg-gray-200">
             <div
-              className="h-full rounded-full bg-orange-500 transition-all duration-500"
+              className="progress-stripes h-full rounded-full bg-orange-500 transition-all duration-500"
               style={{ width: progreso }}
             />
           </div>
