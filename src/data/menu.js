@@ -6,7 +6,7 @@ import burger2 from "../assets/productos/david-foodphototasty-E94j3rMcxlw-unspla
 
 import hotdog1 from "../assets/productos/delicious-hot-dogs-with-mustard-onion.jpg";
 
-import pepsi from "../assets/productos/descargar.jpg";
+import pepsi from "../assets/productos/descargar.png";
 
 import salchi from "../assets/productos/emplatado-final-de-las-salchipapas.jpg";
 
