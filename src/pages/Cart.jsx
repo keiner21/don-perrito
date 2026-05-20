@@ -6,242 +6,152 @@ import { fmt } from "../utils/format";
 import { saveActiveOrder } from "../utils/activeOrder";
 import logoDonPerrito from "../assets/logo-don-perrito.png";
 
-const METODOS_PAGO = ["Efectivo", "Nequi", "Daviplata", "Bancolombia", "Tarjeta"];
+const METODOS_PAGO = [
+  { id: "Efectivo", icon: "💵", label: "Efectivo" },
+  { id: "Nequi", icon: "💜", label: "Nequi" },
+  { id: "Daviplata", icon: "🔴", label: "Daviplata" },
+  { id: "Bancolombia", icon: "🟡", label: "Bancolombia" },
+  { id: "Tarjeta", icon: "💳", label: "Tarjeta" },
+];
 
-const METODO_ICONS = {
-  Efectivo: "💵",
-  Nequi: "📱",
-  Daviplata: "🏦",
-  Bancolombia: "🏛️",
-  Tarjeta: "💳",
-};
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #08080e;
+    --surface: rgba(255,255,255,0.03);
+    --surface2: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.07);
+    --amber: #f59e0b;
+    --orange: #f97316;
+    --text: #f1f0ee;
+    --muted: rgba(255,255,255,0.35);
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .cart-shell { min-height: 100vh; background: var(--bg); padding: 24px 20px 80px; }
+  .cart-inner { max-width: 900px; margin: 0 auto; }
 
-const CART_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s; margin-bottom: 28px;
+  }
+  .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
 
-  .cart-root {
-    min-height: 100vh; background: #f5f0eb;
-    font-family: 'DM Sans', sans-serif; color: #1a1207;
-  }
+  .cart-header { margin-bottom: 28px; }
+  .cart-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--amber); }
+  .cart-title { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--text); margin-top: 4px; }
+  .cart-count { font-size: 14px; color: var(--muted); margin-top: 4px; }
 
-  /* Top bar */
-  .cart-topbar {
-    background: #1a1207; padding: 1rem 1.5rem;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 40;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-  }
-  .cart-back-btn {
-    display: flex; align-items: center; gap: 0.5rem;
-    color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-    padding: 0.5rem 1rem; font-size: 0.82rem; font-weight: 600;
-    cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
-  }
-  .cart-back-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
-  .cart-topbar-title {
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
-    color: #fff; display: flex; align-items: center; gap: 0.5rem;
-  }
-  .cart-mesa-badge {
-    font-size: 0.65rem; padding: 0.2rem 0.6rem; border-radius: 999px;
-    background: rgba(234,88,12,0.25); color: #f97316;
-    font-weight: 700; letter-spacing: 0.08em;
-  }
-
-  /* Layout */
-  .cart-layout {
-    max-width: 1100px; margin: 0 auto;
-    padding: 2rem 1.5rem 8rem;
-    display: grid; gap: 1.5rem;
-    grid-template-columns: 1fr;
-  }
-  @media (min-width: 900px) {
-    .cart-layout { grid-template-columns: 1fr 360px; align-items: start; }
-  }
-
-  .section-title {
-    font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 900;
-    color: #1a1207; margin-bottom: 1rem;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .section-count {
-    font-size: 0.7rem; padding: 0.25rem 0.65rem; border-radius: 999px;
-    background: #1a1207; color: #fff; font-family: 'DM Sans', sans-serif; font-weight: 700;
-  }
+  .cart-layout { display: grid; gap: 24px; grid-template-columns: 1fr; }
+  @media(min-width: 720px) { .cart-layout { grid-template-columns: 1fr 320px; } }
 
   /* Item cards */
   .item-card {
-    background: #fff; border-radius: 18px;
-    padding: 1rem; margin-bottom: 0.75rem;
-    display: flex; gap: 1rem; align-items: flex-start;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: transform 0.2s, box-shadow 0.2s;
-    animation: cardIn 0.3s ease both;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 16px;
+    display: flex; gap: 16px; align-items: flex-start;
+    transition: border-color 0.2s;
   }
-  @keyframes cardIn {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  .item-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-
-  .item-img {
-    width: 78px; height: 78px; border-radius: 12px;
-    object-fit: cover; background: #fdf0e6; flex-shrink: 0;
-  }
+  .item-card:hover { border-color: rgba(249,115,22,0.15); }
+  .item-img { width: 80px; height: 80px; border-radius: 14px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
   .item-info { flex: 1; min-width: 0; }
-  .item-name {
-    font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 800;
-    color: #1a1207; margin-bottom: 0.15rem;
-  }
-  .item-unit { font-size: 0.75rem; color: #8a7460; }
-  .item-actions {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: 0.75rem;
-  }
-
-  .qty-row { display: flex; align-items: center; border-radius: 10px; overflow: hidden; border: 1.5px solid #f0e6d8; }
+  .item-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .item-unit { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .item-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; flex-wrap: wrap; gap: 12px; }
+  .item-subtotal { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--amber); }
+  .item-actions { display: flex; align-items: center; gap: 4px; }
+  .qty-row { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
   .qty-btn {
-    width: 34px; height: 34px; background: #fdf0e6; border: none;
-    cursor: pointer; font-size: 1rem; font-weight: 700; color: #1a1207;
-    transition: background 0.15s; display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 9px; border: none; cursor: pointer;
+    font-size: 16px; font-weight: 800; font-family: 'Syne', sans-serif;
+    transition: all 0.15s;
   }
-  .qty-btn:hover { background: #ea580c; color: #fff; }
-  .qty-num {
-    width: 38px; text-align: center; font-family: 'Syne', sans-serif;
-    font-size: 0.9rem; font-weight: 800; background: #fff; color: #1a1207;
+  .qty-btn.minus { background: rgba(255,255,255,0.06); color: var(--text); }
+  .qty-btn.minus:hover { background: rgba(255,255,255,0.1); }
+  .qty-btn.plus { background: linear-gradient(135deg, var(--orange), var(--amber)); color: #fff; }
+  .qty-num { width: 32px; text-align: center; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
+  .remove-btn {
+    width: 34px; height: 34px; border-radius: 9px; border: none;
+    background: rgba(255,107,107,0.1); color: #ff6b6b;
+    cursor: pointer; font-size: 14px; margin-left: 6px;
+    transition: all 0.15s;
   }
+  .remove-btn:hover { background: rgba(255,107,107,0.2); }
 
-  .item-subtotal {
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 900; color: #ea580c;
+  /* Summary sidebar */
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 24px; padding: 24px;
+    position: sticky; top: 24px;
   }
-  .btn-remove {
-    background: #fff0f0; border: none; border-radius: 8px;
-    padding: 0.35rem 0.7rem; font-size: 0.72rem; font-weight: 700;
-    color: #ef4444; cursor: pointer; transition: background 0.15s;
-    flex-shrink: 0; align-self: flex-start;
-    font-family: 'DM Sans', sans-serif;
+  .summary-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 20px; }
+  .payment-label { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pay-btn {
+    padding: 12px 8px; border-radius: 14px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    text-align: center; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
   }
-  .btn-remove:hover { background: #fee2e2; }
+  .pay-btn:hover { border-color: rgba(249,115,22,0.3); color: var(--text); }
+  .pay-btn.selected { border-color: var(--amber); background: rgba(245,158,11,0.1); color: var(--amber); }
+  .pay-icon { font-size: 20px; }
+  .pay-hint { font-size: 11px; color: rgba(245,158,11,0.7); margin-top: 8px; }
 
-  /* Summary panel */
-  .summary-panel {
-    background: #1a1207; border-radius: 22px; padding: 1.5rem;
-    color: #fff; box-shadow: 0 8px 32px rgba(26,18,7,0.25);
-    position: relative; overflow: hidden;
-  }
-  .summary-panel::before {
-    content: ''; position: absolute;
-    top: -60px; right: -60px; width: 180px; height: 180px;
-    border-radius: 50%; background: rgba(234,88,12,0.15); filter: blur(40px);
-  }
-  .summary-title {
-    font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 900;
-    margin-bottom: 1.25rem; position: relative;
-  }
-
-  /* Payment methods */
-  .payment-label {
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    color: rgba(255,255,255,0.45); margin-bottom: 0.75rem;
-  }
-  .payment-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem;
-  }
-  .payment-btn {
-    display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-    padding: 0.75rem 0.5rem; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05); cursor: pointer; transition: all 0.2s;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .payment-btn:hover { border-color: rgba(234,88,12,0.5); background: rgba(234,88,12,0.1); }
-  .payment-btn-active {
-    border-color: #ea580c; background: rgba(234,88,12,0.2);
-    box-shadow: 0 0 0 1px rgba(234,88,12,0.4);
-  }
-  .payment-icon { font-size: 1.3rem; }
-  .payment-name { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.8); }
-  .payment-name-active { color: #fdba74; }
-
-  .summary-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 1rem 0; }
-  .summary-row {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.82rem; color: rgba(255,255,255,0.5); margin-bottom: 0.5rem;
-  }
-  .summary-total {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-top: 0.25rem;
-  }
-  .summary-total-label {
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; color: #fff;
-  }
-  .summary-total-price {
-    font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 900; color: #f97316;
-  }
-
-  .payment-hint {
-    font-size: 0.75rem; color: rgba(249,115,22,0.8); margin-top: 0.5rem;
-    display: flex; align-items: center; gap: 0.35rem;
-  }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; }
+  .summary-row-label { font-size: 13px; color: var(--muted); }
+  .summary-row-val { font-size: 13px; color: var(--text); font-weight: 600; }
+  .summary-total-label { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--text); }
+  .summary-total-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--amber); }
 
   .error-box {
-    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
-    border-radius: 12px; padding: 0.75rem; margin-top: 1rem;
-    color: #fca5a5; font-size: 0.78rem; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2);
+    border-radius: 12px; padding: 12px 14px;
+    font-size: 13px; color: #ff6b6b; margin: 16px 0;
   }
-
   .submit-btn {
-    width: 100%; margin-top: 1.25rem;
-    padding: 1rem; border-radius: 14px; border: none; cursor: pointer;
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 900;
-    color: #fff; background: linear-gradient(135deg, #ea580c, #c2410c);
-    box-shadow: 0 4px 20px rgba(234,88,12,0.4);
-    transition: all 0.2s; position: relative; overflow: hidden;
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--orange), var(--amber));
+    border: none; border-radius: 16px; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800;
+    color: #fff; box-shadow: 0 8px 28px rgba(249,115,22,0.35);
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
   }
-  .submit-btn::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%);
-  }
-  .submit-btn:hover:not(:disabled) {
-    transform: translateY(-1px); box-shadow: 0 8px 30px rgba(234,88,12,0.55);
-  }
-  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(249,115,22,0.45); }
+  .submit-btn:disabled { background: rgba(255,255,255,0.08); box-shadow: none; cursor: not-allowed; color: var(--muted); transform: none; }
 
-  /* Empty state */
-  .empty-root {
-    min-height: 100vh; background: #f5f0eb;
-    display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-    font-family: 'DM Sans', sans-serif;
+  /* Empty */
+  .empty-shell { min-height: 100vh; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .empty-card { max-width: 380px; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 48px 36px; text-align: center; }
+  .empty-icon { font-size: 56px; margin-bottom: 16px; }
+  .empty-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text); }
+  .empty-desc { font-size: 14px; color: var(--muted); margin-top: 10px; margin-bottom: 28px; line-height: 1.6; }
+  .empty-btn {
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, var(--orange), var(--amber));
+    border: none; border-radius: 14px; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #fff;
+    box-shadow: 0 8px 24px rgba(249,115,22,0.3); transition: all 0.2s;
   }
-  .empty-card {
-    max-width: 380px; width: 100%; background: #fff; border-radius: 24px;
-    padding: 3rem 2rem; text-align: center;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
-    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
-  }
-  @keyframes popIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .empty-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; margin: 0 auto 1.5rem; display: block; box-shadow: 0 4px 20px rgba(234,88,12,0.2); }
-  .empty-title { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 900; color: #1a1207; }
-  .empty-sub { font-size: 0.85rem; color: #8a7460; margin: 0.5rem 0 2rem; line-height: 1.6; }
-  .btn-back-menu {
-    width: 100%; padding: 0.9rem; border-radius: 12px; border: none;
-    background: linear-gradient(135deg, #ea580c, #c2410c);
-    color: #fff; font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 800;
-    cursor: pointer; box-shadow: 0 4px 16px rgba(234,88,12,0.35);
-    transition: all 0.2s;
-  }
-  .btn-back-menu:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(234,88,12,0.45); }
+  .empty-btn:hover { transform: translateY(-2px); }
 
-  .spinner {
-    display: inline-block; width: 14px; height: 14px;
-    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-    border-radius: 50%; animation: spin 0.6s linear infinite;
-    margin-right: 8px; vertical-align: middle;
-  }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+  .item-card { animation: slideIn 0.3s ease both; }
 `;
 
 export default function Cart() {
@@ -252,8 +162,8 @@ export default function Cart() {
   const [error, setError] = useState("");
 
   async function enviarPedido() {
-    if (carrito.length === 0) { setError("Agrega al menos un producto antes de enviar el pedido."); return; }
-    if (!METODOS_PAGO.includes(metodoPago)) { setError("Selecciona un método de pago para continuar."); return; }
+    if (carrito.length === 0) { setError("Agrega al menos un producto."); return; }
+    if (!metodoPago) { setError("Selecciona un método de pago."); return; }
     try {
       setError(""); setLoading(true);
       const pedido = { mesa: localStorage.getItem("mesa") || "1", metodo: metodoPago, total: subtotal, items: carrito };
@@ -270,57 +180,50 @@ export default function Cart() {
 
   if (carrito.length === 0) {
     return (
-      <>
-        <style>{CART_STYLES}</style>
-        <div className="empty-root">
-          <div className="empty-card">
-            <img src={logoDonPerrito} alt="Don Perrito" className="empty-logo" />
-            <h1 className="empty-title">Carrito vacío</h1>
-            <p className="empty-sub">Agrega productos desde el menú para armar tu pedido y disfrutar.</p>
-            <button className="btn-back-menu" onClick={() => navigate("/")}>← Volver al menú</button>
-          </div>
+      <div className="empty-shell">
+        <style>{CSS}</style>
+        <div className="empty-card">
+          <div className="empty-icon">🛒</div>
+          <div className="empty-title">Carrito vacío</div>
+          <p className="empty-desc">Agrega productos desde el menú para armar tu pedido.</p>
+          <button className="empty-btn" onClick={() => navigate("/")}>← Volver al menú</button>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <style>{CART_STYLES}</style>
-      <div className="cart-root">
-        <div className="cart-topbar">
-          <button className="cart-back-btn" onClick={() => navigate(-1)}>← Volver</button>
-          <div className="cart-topbar-title">
-            Tu pedido
-            <span className="cart-mesa-badge">Mesa #{localStorage.getItem("mesa") || "1"}</span>
-          </div>
-          <div style={{ width: 80 }} />
+    <div className="cart-shell">
+      <style>{CSS}</style>
+      <div className="cart-inner">
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Volver
+        </button>
+
+        <div className="cart-header">
+          <div className="cart-eyebrow">Mesa #{localStorage.getItem("mesa") || "1"}</div>
+          <h1 className="cart-title">Tu pedido</h1>
+          <div className="cart-count">{totalItems} producto{totalItems !== 1 ? "s" : ""}</div>
         </div>
 
         <div className="cart-layout">
           {/* Items */}
-          <section>
-            <h2 className="section-title">
-              Productos <span className="section-count">{totalItems}</span>
-            </h2>
+          <section style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {carrito.map((item, i) => (
-              <div key={item.id} className="item-card" style={{ animationDelay: `${i * 0.06}s` }}>
+              <div key={item.id} className="item-card" style={{ animationDelay: `${i * 60}ms` }}>
                 <img src={item.imagen} alt={item.nombre} className="item-img" />
                 <div className="item-info">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div>
-                      <p className="item-name">{item.nombre}</p>
-                      <p className="item-unit">{fmt(item.precio)} c/u</p>
-                    </div>
-                    <button className="btn-remove" onClick={() => eliminar(item.id)}>✕ Quitar</button>
-                  </div>
-                  <div className="item-actions">
+                  <div className="item-name">{item.nombre}</div>
+                  <div className="item-unit">{fmt(item.precio)} c/u</div>
+                  <div className="item-bottom">
                     <div className="qty-row">
-                      <button className="qty-btn" onClick={() => cambiarQty(item.id, -1)}>−</button>
+                      <button className="qty-btn minus" onClick={() => cambiarQty(item.id, -1)}>−</button>
                       <span className="qty-num">{item.qty}</span>
-                      <button className="qty-btn" onClick={() => cambiarQty(item.id, 1)}>+</button>
+                      <button className="qty-btn plus" onClick={() => cambiarQty(item.id, 1)}>+</button>
                     </div>
                     <span className="item-subtotal">{fmt(item.precio * item.qty)}</span>
+                    <button className="remove-btn" onClick={() => eliminar(item.id)} title="Quitar">✕</button>
                   </div>
                 </div>
               </div>
@@ -328,53 +231,52 @@ export default function Cart() {
           </section>
 
           {/* Summary */}
-          <aside className="summary-panel">
-            <h2 className="summary-title">Resumen del pedido</h2>
+          <aside className="summary-card">
+            <div className="summary-title">Resumen</div>
 
-            <p className="payment-label">Método de pago</p>
+            <div className="payment-label">Método de pago</div>
             <div className="payment-grid">
-              {METODOS_PAGO.map((metodo) => (
+              {METODOS_PAGO.map((m) => (
                 <button
-                  key={metodo}
-                  className={`payment-btn ${metodoPago === metodo ? "payment-btn-active" : ""}`}
-                  onClick={() => setMetodoPago(metodo)}
+                  key={m.id}
+                  className={`pay-btn${metodoPago === m.id ? " selected" : ""}`}
+                  onClick={() => setMetodoPago(m.id)}
                 >
-                  <span className="payment-icon">{METODO_ICONS[metodo]}</span>
-                  <span className={`payment-name ${metodoPago === metodo ? "payment-name-active" : ""}`}>
-                    {metodo}
-                  </span>
+                  <span className="pay-icon">{m.icon}</span>
+                  {m.label}
                 </button>
               ))}
             </div>
+            {!metodoPago && <div className="pay-hint">⚠ Selecciona cómo vas a pagar</div>}
 
-            {!metodoPago && (
-              <p className="payment-hint">⚡ Selecciona cómo vas a pagar antes de enviar.</p>
-            )}
+            <hr className="divider" />
 
-            <div className="summary-divider" />
-
-            <div className="summary-row"><span>Productos</span><span>{totalItems}</span></div>
-            <div className="summary-row"><span>Mesa</span><span>#{localStorage.getItem("mesa") || "1"}</span></div>
-            {metodoPago && <div className="summary-row"><span>Método</span><span>{metodoPago}</span></div>}
-
-            <div className="summary-divider" />
-            <div className="summary-total">
-              <span className="summary-total-label">Total</span>
-              <span className="summary-total-price">{fmt(subtotal)}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="summary-row">
+                <span className="summary-row-label">Productos</span>
+                <span className="summary-row-val">{totalItems}</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-total-label">Total</span>
+                <span className="summary-total-val">{fmt(subtotal)}</span>
+              </div>
             </div>
 
-            {error && <p className="error-box">⚠ {error}</p>}
+            {error && (
+              <div className="error-box">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {error}
+              </div>
+            )}
 
-            <button
-              className="submit-btn"
-              onClick={enviarPedido}
-              disabled={loading}
-            >
-              {loading ? <><span className="spinner" />Enviando...</> : "Enviar pedido 🚀"}
+            <button className="submit-btn" onClick={enviarPedido} disabled={loading} style={{ marginTop: "20px" }}>
+              {loading ? <><span className="spinner" /> Enviando...</> : <>Enviar pedido <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></>}
             </button>
           </aside>
         </div>
       </div>
-    </>
+    </div>
   );
 }

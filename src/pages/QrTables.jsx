@@ -3,188 +3,151 @@ import logoDonPerrito from "../assets/logo-don-perrito.png";
 
 const MESAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-const QR_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #08080e;
+    --surface: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.07);
+    --amber: #f59e0b;
+    --orange: #f97316;
+    --text: #f1f0ee;
+    --muted: rgba(255,255,255,0.35);
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .qr-shell { min-height: 100vh; background: var(--bg); padding: 32px 24px 60px; position: relative; overflow: hidden; }
 
-  .qr-root {
-    min-height: 100vh; background: #f5f0eb;
-    font-family: 'DM Sans', sans-serif; color: #1a1207;
-    padding: 2rem 1.5rem 4rem;
+  /* BG accent */
+  .qr-bg-blob {
+    position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 400px;
+    background: radial-gradient(ellipse, rgba(249,115,22,0.08) 0%, transparent 70%);
+    pointer-events: none;
   }
 
   /* Header */
   .qr-header {
-    max-width: 1100px; margin: 0 auto 2.5rem;
-    background: #1a1207; border-radius: 24px;
-    padding: 1.75rem 2rem;
-    display: flex; align-items: center; gap: 1.5rem;
-    flex-wrap: wrap; justify-content: space-between;
-    box-shadow: 0 8px 40px rgba(26,18,7,0.25);
-    position: relative; overflow: hidden;
+    max-width: 1100px; margin: 0 auto 40px;
+    display: flex; align-items: center; gap: 20px;
+    background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    border-radius: 24px; padding: 24px 28px;
+    position: relative;
   }
-  .qr-header::before {
-    content: ''; position: absolute; top: -60px; right: -60px;
-    width: 200px; height: 200px; border-radius: 50%;
-    background: rgba(234,88,12,0.15); filter: blur(40px);
+  .qr-logo { width: 64px; height: 64px; border-radius: 18px; object-fit: cover; border: 2px solid rgba(249,115,22,0.3); box-shadow: 0 0 32px rgba(249,115,22,0.2); }
+  .qr-brand-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--amber); }
+  .qr-brand-name { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--text); margin-top: 2px; }
+  .qr-brand-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .qr-print-btn {
+    margin-left: auto; padding: 12px 24px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 14px; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text);
+    transition: all 0.2s;
   }
-  .qr-header-left { display: flex; align-items: center; gap: 1.25rem; position: relative; }
-  .qr-logo {
-    width: 64px; height: 64px; border-radius: 16px; object-fit: cover;
-    border: 2px solid rgba(234,88,12,0.4);
-    box-shadow: 0 0 24px rgba(234,88,12,0.3);
-  }
-  .qr-eyebrow {
-    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
-    color: #f97316; margin-bottom: 0.25rem;
-  }
-  .qr-title {
-    font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 900;
-    color: #fff; line-height: 1;
-  }
-  .qr-sub { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.25rem; }
-
-  .qr-header-stats { display: flex; gap: 1.5rem; position: relative; }
-  .stat-item { text-align: right; }
-  .stat-num {
-    font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 900; color: #f97316;
-  }
-  .stat-label { font-size: 0.7rem; color: rgba(255,255,255,0.35); font-weight: 500; }
+  .qr-print-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.15); }
 
   /* Grid */
   .qr-grid {
     max-width: 1100px; margin: 0 auto;
-    display: grid; gap: 1.25rem;
+    display: grid; gap: 20px;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
 
-  /* Card */
+  /* QR Card */
   .qr-card {
-    background: #fff; border-radius: 20px;
-    padding: 1.5rem; text-align: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: 1.5px solid rgba(26,18,7,0.06);
-    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
-    animation: cardPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-    position: relative; overflow: hidden;
-  }
-  @keyframes cardPop {
-    from { opacity: 0; transform: scale(0.9) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 24px; padding: 24px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    animation: fadeUp 0.4s ease both;
+    cursor: default;
   }
   .qr-card:hover {
-    transform: translateY(-5px) scale(1.01);
-    box-shadow: 0 16px 40px rgba(0,0,0,0.13);
+    transform: translateY(-6px) scale(1.01);
+    border-color: rgba(249,115,22,0.25);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(249,115,22,0.1);
   }
-
-  .qr-card-accent {
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #ea580c, #f97316, #fbbf24);
-    border-radius: 999px 999px 0 0;
+  .qr-mesa-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 100px;
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2);
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--amber);
+    margin-bottom: 16px;
   }
-
-  .qr-mesa-label {
-    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
-    color: #f97316; margin-bottom: 0.25rem;
-  }
-  .qr-mesa-num {
-    font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 900;
-    color: #1a1207; margin-bottom: 1.25rem; line-height: 1;
-  }
-
+  .qr-mesa-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 18px; }
   .qr-code-wrap {
-    background: #fff; border-radius: 14px;
-    padding: 1rem; display: inline-block;
-    border: 1.5px solid rgba(26,18,7,0.08);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    margin-bottom: 1rem;
+    background: #fff; border-radius: 18px; padding: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    position: relative;
   }
-
+  .qr-corner {
+    position: absolute; width: 14px; height: 14px;
+    border-color: var(--amber); border-style: solid;
+  }
+  .qr-corner.tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+  .qr-corner.tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+  .qr-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
+  .qr-corner.br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
   .qr-url {
-    font-size: 0.62rem; color: #b8a898;
-    word-break: break-all; line-height: 1.5;
-    background: #fdf8f3; border-radius: 8px;
-    padding: 0.4rem 0.6rem; margin-top: 0.25rem;
+    font-size: 10px; color: var(--muted); margin-top: 14px;
+    text-align: center; word-break: break-all; line-height: 1.5;
+    max-width: 180px;
   }
-
   .qr-scan-hint {
-    display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-    font-size: 0.7rem; color: #8a7460; font-weight: 500; margin-top: 0.75rem;
-  }
-  .scan-dot {
-    width: 6px; height: 6px; border-radius: 50%; background: #ea580c;
-    animation: scanPulse 2s ease-in-out infinite;
-  }
-  @keyframes scanPulse {
-    0%, 100% { opacity: 0.4; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.2); }
+    margin-top: 12px; font-size: 11px; font-weight: 600; color: rgba(249,115,22,0.6);
+    letter-spacing: 0.5px;
   }
 
-  /* Print styles */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
   @media print {
-    .qr-root { background: #fff; padding: 0; }
-    .qr-header { display: none; }
-    .qr-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 100%; }
-    .qr-card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
-    .qr-card:hover { transform: none; }
+    .qr-shell { background: white !important; }
+    .qr-card { background: white !important; border: 1px solid #ddd !important; break-inside: avoid; }
+    .qr-bg-blob, .qr-print-btn { display: none !important; }
+    body { background: white !important; color: black !important; }
+    .qr-brand-name, .qr-mesa-num { color: black !important; }
+    .qr-url { color: #666 !important; }
   }
 `;
 
 export default function QrTables() {
   return (
-    <>
-      <style>{QR_STYLES}</style>
-      <div className="qr-root">
-        <header className="qr-header">
-          <div className="qr-header-left">
-            <img src={logoDonPerrito} alt="Don Perrito" className="qr-logo" />
-            <div>
-              <p className="qr-eyebrow">Don Perrito</p>
-              <h1 className="qr-title">QR de mesas</h1>
-              <p className="qr-sub">Escanea, pide y sigue tu pedido desde la mesa.</p>
-            </div>
-          </div>
-          <div className="qr-header-stats">
-            <div className="stat-item">
-              <div className="stat-num">{MESAS.length}</div>
-              <div className="stat-label">Mesas activas</div>
-            </div>
-          </div>
-        </header>
+    <div className="qr-shell">
+      <style>{CSS}</style>
+      <div className="qr-bg-blob" />
 
-        <div className="qr-grid">
-          {MESAS.map((mesa, i) => {
-            const url = `https://don-perrito.vercel.app/mesa/${mesa}`;
-            return (
-              <div
-                key={mesa}
-                className="qr-card"
-                style={{ animationDelay: `${i * 0.06}s` }}
-              >
-                <div className="qr-card-accent" />
-                <p className="qr-mesa-label">Escanear para pedir</p>
-                <h2 className="qr-mesa-num">Mesa #{mesa}</h2>
-
-                <div className="qr-code-wrap">
-                  <QRCodeSVG
-                    value={url}
-                    size={160}
-                    level="M"
-                    includeMargin={false}
-                    fgColor="#1a1207"
-                  />
-                </div>
-
-                <div className="qr-url">{url}</div>
-
-                <div className="qr-scan-hint">
-                  <div className="scan-dot" style={{ animationDelay: `${i * 0.3}s` }} />
-                  Apunta la cámara al código
-                </div>
-              </div>
-            );
-          })}
+      <header className="qr-header">
+        <img src={logoDonPerrito} alt="Don Perrito" className="qr-logo" />
+        <div>
+          <div className="qr-brand-eyebrow">Don Perrito</div>
+          <div className="qr-brand-name">QR de Mesas</div>
+          <div className="qr-brand-sub">Escanea, pide y sigue el estado desde tu mesa</div>
         </div>
+        <button className="qr-print-btn" onClick={() => window.print()}>
+          🖨 Imprimir todo
+        </button>
+      </header>
+
+      <div className="qr-grid">
+        {MESAS.map((mesa, i) => {
+          const url = `https://don-perrito.vercel.app/mesa/${mesa}`;
+          return (
+            <div key={mesa} className="qr-card" style={{ animationDelay: `${i * 50}ms` }}>
+              <div className="qr-mesa-badge">Mesa</div>
+              <div className="qr-mesa-num">#{mesa}</div>
+              <div className="qr-code-wrap">
+                <div className="qr-corner tl" />
+                <div className="qr-corner tr" />
+                <div className="qr-corner bl" />
+                <div className="qr-corner br" />
+                <QRCodeSVG value={url} size={160} />
+              </div>
+              <div className="qr-url">{url}</div>
+              <div className="qr-scan-hint">📱 Escanear para pedir</div>
+            </div>
+          );
+        })}
       </div>
-    </>
+    </div>
   );
 }
