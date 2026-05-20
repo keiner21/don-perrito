@@ -11,6 +11,21 @@ import {
   YAxis,
 } from "recharts";
 
+import {
+  CalendarDays,
+  CheckCircle2,
+  ChefHat,
+  ClipboardList,
+  Download,
+  LogOut,
+  RefreshCw,
+  Search,
+  Siren,
+  TrendingUp,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+
 import * as XLSX from "xlsx";
 
 import ding from "../assets/ding.mp3";
@@ -30,6 +45,27 @@ const estadoClasses = {
   Pendiente: "border-amber-200 bg-amber-100 text-amber-800",
   Preparando: "border-sky-200 bg-sky-100 text-sky-800",
   Listo: "border-emerald-200 bg-emerald-100 text-emerald-800",
+};
+
+const estadoColumnStyles = {
+  Pendiente: {
+    icon: Siren,
+    title: "Pendientes",
+    card: "border-amber-200 bg-amber-50/80",
+    iconClass: "bg-amber-500 text-white",
+  },
+  Preparando: {
+    icon: ChefHat,
+    title: "En cocina",
+    card: "border-sky-200 bg-sky-50/80",
+    iconClass: "bg-sky-500 text-white",
+  },
+  Listo: {
+    icon: CheckCircle2,
+    title: "Listos",
+    card: "border-emerald-200 bg-emerald-50/80",
+    iconClass: "bg-emerald-500 text-white",
+  },
 };
 
 export default function Admin() {
@@ -221,6 +257,15 @@ export default function Admin() {
     });
   }, [busqueda, estadoFiltro, pedidosDelDia]);
 
+  const pedidosPorEstado = useMemo(
+    () =>
+      ["Pendiente", "Preparando", "Listo"].map((estado) => ({
+        estado,
+        pedidos: pedidosOperativos.filter((pedido) => pedido.estado === estado),
+      })),
+    [pedidosOperativos]
+  );
+
   const resumenDia = useMemo(() => getResumen(pedidosDelDia), [pedidosDelDia]);
   const resumenTotal = useMemo(() => getResumen(pedidos), [pedidos]);
 
@@ -265,7 +310,11 @@ export default function Admin() {
   return (
     <div className="app-shell min-h-screen p-4 text-gray-900 sm:p-6">
       <div className="mx-auto max-w-7xl">
-        <header className="brand-surface mb-6 flex flex-col gap-4 rounded-3xl p-5 text-white shadow-2xl lg:flex-row lg:items-center lg:justify-between">
+        <header className="brand-surface relative mb-6 overflow-hidden rounded-[2rem] p-5 text-white shadow-2xl">
+          <div className="pointer-events-none absolute right-[-6rem] top-[-8rem] h-72 w-72 rounded-full bg-orange-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-[-7rem] left-1/3 h-64 w-64 rounded-full bg-yellow-300/10 blur-3xl" />
+
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <img
               src={logoDonPerrito}
@@ -278,12 +327,12 @@ export default function Admin() {
                 Panel administrativo
               </p>
 
-              <h1 className="text-4xl font-black">
-                Pedidos
+              <h1 className="text-4xl font-black tracking-tight">
+                Centro de pedidos
               </h1>
 
               <p className="mt-1 text-gray-300">
-                Atiende el día actual y revisa informes cuando lo necesites.
+                Atiende el día actual, controla cocina y revisa ventas sin ruido.
               </p>
             </div>
           </div>
@@ -293,28 +342,32 @@ export default function Admin() {
               onClick={() =>
                 sonidoActivo ? setSonidoActivo(false) : activarSonido()
               }
-              className={`rounded-2xl px-4 py-3 text-sm font-bold transition ${
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition ${
                 sonidoActivo
                   ? "bg-orange-600 text-white hover:bg-orange-700"
                   : "bg-white text-gray-800 shadow-sm hover:bg-orange-50"
               }`}
             >
+              {sonidoActivo ? <Volume2 size={18} /> : <VolumeX size={18} />}
               {sonidoActivo ? "Sonido activo" : "Activar sonido"}
             </button>
 
             <button
               onClick={cargarPedidos}
-              className="rounded-2xl bg-white px-4 py-3 text-sm font-bold shadow-sm transition hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-gray-900 shadow-sm transition hover:bg-gray-50"
             >
+              <RefreshCw size={18} />
               Actualizar
             </button>
 
             <button
               onClick={logout}
-              className="rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-black"
+              className="inline-flex items-center gap-2 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-black"
             >
+              <LogOut size={18} />
               Salir
             </button>
+          </div>
           </div>
         </header>
 
@@ -376,21 +429,28 @@ export default function Admin() {
         {vistaActiva === "Pedidos" ? (
           <>
             <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-              <Metric label="Ventas del día" value={fmt(resumenDia.ventas)} />
-              <Metric label="Pedidos" value={resumenDia.total} />
-              <Metric label="Pendientes" value={resumenDia.pendientes} tone="amber" />
-              <Metric label="Preparando" value={resumenDia.preparando} tone="sky" />
-              <Metric label="Listos" value={resumenDia.listos} tone="emerald" />
+              <Metric icon={TrendingUp} label="Ventas del día" value={fmt(resumenDia.ventas)} />
+              <Metric icon={ClipboardList} label="Pedidos" value={resumenDia.total} />
+              <Metric icon={Siren} label="Pendientes" value={resumenDia.pendientes} tone="amber" />
+              <Metric icon={ChefHat} label="Preparando" value={resumenDia.preparando} tone="sky" />
+              <Metric icon={CheckCircle2} label="Listos" value={resumenDia.listos} tone="emerald" />
             </section>
 
             <section className="glass-card mb-6 grid gap-3 rounded-3xl p-4 md:grid-cols-[1fr_auto]">
-              <input
-                type="search"
-                placeholder="Buscar pedido, mesa o producto"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="rounded-2xl border border-gray-200 px-4 py-3 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-              />
+              <label className="relative block">
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+
+                <input
+                  type="search"
+                  placeholder="Buscar pedido, mesa o producto"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 py-3 pl-11 pr-4 outline-none transition focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                />
+              </label>
 
               <select
                 value={estadoFiltro}
@@ -408,9 +468,13 @@ export default function Admin() {
             <section className="mb-8">
               <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h2 className="text-2xl font-black capitalize">
-                    {formatLongDate(diaActivo)}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <CalendarDays size={22} className="text-orange-600" />
+
+                    <h2 className="text-2xl font-black capitalize">
+                      {formatLongDate(diaActivo)}
+                    </h2>
+                  </div>
 
                   <p className="text-sm font-semibold text-gray-500">
                     {pedidosOperativos.length} pedido
@@ -424,14 +488,17 @@ export default function Admin() {
               ) : pedidosOperativos.length === 0 ? (
                 <EmptyState text="No hay pedidos para este día o filtro." />
               ) : (
-                <div className="grid gap-4">
-                  {pedidosOperativos.map((pedido) => (
-                    <PedidoCard
-                      key={pedido.id}
-                      pedido={pedido}
-                      onCambiarEstado={cambiarEstado}
-                    />
-                  ))}
+                <div className="grid gap-4 xl:grid-cols-3">
+                  {pedidosPorEstado
+                    .filter(({ estado }) => estadoFiltro === "Todos" || estadoFiltro === estado)
+                    .map(({ estado, pedidos: pedidosEstado }) => (
+                      <EstadoColumn
+                        key={estado}
+                        estado={estado}
+                        pedidos={pedidosEstado}
+                        onCambiarEstado={cambiarEstado}
+                      />
+                    ))}
                 </div>
               )}
             </section>
@@ -491,11 +558,11 @@ function Informe({ exportarExcel, pedidos, resumenTotal, ventasPorDia }) {
   return (
     <>
       <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Metric label="Ventas totales" value={fmt(resumenTotal.ventas)} />
-        <Metric label="Pedidos" value={resumenTotal.total} />
-        <Metric label="Pendientes" value={resumenTotal.pendientes} tone="amber" />
-        <Metric label="Preparando" value={resumenTotal.preparando} tone="sky" />
-        <Metric label="Listos" value={resumenTotal.listos} tone="emerald" />
+        <Metric icon={TrendingUp} label="Ventas totales" value={fmt(resumenTotal.ventas)} />
+        <Metric icon={ClipboardList} label="Pedidos" value={resumenTotal.total} />
+        <Metric icon={Siren} label="Pendientes" value={resumenTotal.pendientes} tone="amber" />
+        <Metric icon={ChefHat} label="Preparando" value={resumenTotal.preparando} tone="sky" />
+        <Metric icon={CheckCircle2} label="Listos" value={resumenTotal.listos} tone="emerald" />
       </section>
 
       <section className="glass-card mb-8 rounded-3xl p-5">
@@ -512,8 +579,9 @@ function Informe({ exportarExcel, pedidos, resumenTotal, ventasPorDia }) {
 
           <button
             onClick={exportarExcel}
-            className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
           >
+            <Download size={18} />
             Exportar Excel
           </button>
         </div>
@@ -579,23 +647,35 @@ function Informe({ exportarExcel, pedidos, resumenTotal, ventasPorDia }) {
   );
 }
 
-function Metric({ label, value, tone = "orange" }) {
+function Metric({ icon: Icon, label, value, tone = "orange" }) {
   const tones = {
-    orange: "bg-orange-600",
-    amber: "bg-amber-500",
-    sky: "bg-sky-500",
-    emerald: "bg-emerald-600",
+    orange: "from-orange-600 to-amber-500",
+    amber: "from-amber-500 to-yellow-400",
+    sky: "from-sky-500 to-cyan-400",
+    emerald: "from-emerald-600 to-lime-500",
   };
 
   return (
-    <div className={`${tones[tone]} lift-card rounded-3xl p-5 text-white shadow-lg`}>
-      <p className="text-sm font-bold uppercase tracking-wide opacity-80">
-        {label}
-      </p>
+    <div className={`lift-card relative overflow-hidden rounded-3xl bg-gradient-to-br ${tones[tone]} p-5 text-white shadow-lg`}>
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
 
-      <p className="mt-3 text-3xl font-black">
-        {value}
-      </p>
+      <div className="relative flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wide opacity-80">
+            {label}
+          </p>
+
+          <p className="mt-3 text-3xl font-black">
+            {value}
+          </p>
+        </div>
+
+        {Icon && (
+          <span className="rounded-2xl bg-white/20 p-3">
+            <Icon size={22} />
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -608,13 +688,56 @@ function EmptyState({ text }) {
   );
 }
 
+function EstadoColumn({ estado, pedidos, onCambiarEstado }) {
+  const style = estadoColumnStyles[estado];
+  const Icon = style.icon;
+
+  return (
+    <section className={`rounded-[2rem] border p-4 ${style.card}`}>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className={`rounded-2xl p-3 ${style.iconClass}`}>
+            <Icon size={20} />
+          </span>
+
+          <div>
+            <h3 className="font-black text-gray-950">
+              {style.title}
+            </h3>
+
+            <p className="text-sm font-semibold text-gray-500">
+              {pedidos.length} pedido{pedidos.length === 1 ? "" : "s"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        {pedidos.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 p-6 text-center text-sm font-bold text-gray-500">
+            Sin pedidos aquí
+          </div>
+        ) : (
+          pedidos.map((pedido) => (
+            <PedidoCard
+              key={pedido.id}
+              pedido={pedido}
+              onCambiarEstado={onCambiarEstado}
+            />
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
 function PedidoCard({ pedido, onCambiarEstado }) {
   return (
-    <article className="animate-in lift-card rounded-3xl border border-white bg-white p-5 shadow-lg">
+    <article className="animate-in lift-card rounded-3xl border border-white bg-white p-4 shadow-lg">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="text-2xl font-black">
+            <h3 className="text-xl font-black">
               Pedido #{pedido.numero}
             </h3>
 
@@ -636,16 +759,16 @@ function PedidoCard({ pedido, onCambiarEstado }) {
           </p>
         </div>
 
-        <p className="text-2xl font-black text-orange-600">
+        <p className="text-xl font-black text-orange-600">
           {fmt(pedido.total)}
         </p>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-2">
         {pedido.items.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between rounded-2xl bg-gray-50 p-4"
+            className="flex items-center justify-between rounded-2xl bg-gray-50 p-3"
           >
             <div>
               <p className="font-black">
@@ -664,13 +787,13 @@ function PedidoCard({ pedido, onCambiarEstado }) {
         ))}
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
         {ESTADOS.filter((estado) => estado !== "Todos").map((estado) => (
           <button
             key={estado}
             onClick={() => onCambiarEstado(pedido.id, estado)}
             disabled={pedido.estado === estado}
-            className={`rounded-2xl px-4 py-3 text-sm font-black transition disabled:cursor-not-allowed ${
+            className={`rounded-2xl px-3 py-3 text-sm font-black transition disabled:cursor-not-allowed ${
               pedido.estado === estado
                 ? "bg-gray-100 text-gray-400"
                 : "bg-zinc-950 text-white hover:bg-black"
